@@ -1,0 +1,35 @@
+.button {
+  display: flex;
+  justify-content: center;
+  padding: 12px 24px;
+  background: none;
+  outline: none;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.button[data-kind="primary"] {
+  background-color: hsla(6, 78%, 57%, 1);
+}
+.button[data-kind="primary"]:hover {
+  background-color: hsla(6, 78%, 57%, 0.5);
+}
+
+.button[data-kind="secondary"] {
+  background-color: hsla(6, 78%, 57%, 0.5);
+}
+
+.button[data-kind="secondary"]:hover {
+  background-color: hsla(6, 78%, 57%, 1);
+}
+
+.button .loader-item {
+  background-color: white;
+}

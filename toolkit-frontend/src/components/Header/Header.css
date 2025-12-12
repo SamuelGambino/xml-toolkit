@@ -1,0 +1,39 @@
+.header {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    border-bottom: 1px solid hsla(6, 78%, 57%, 1);
+}
+
+.header__logo { overflow: visible; }
+
+.header__logo .logo__top {
+    transform-box: fill-box;
+    transform-origin: 100% 0%;
+}
+
+.header__logo:hover .logo__top {
+    animation: open-box 0.9s linear forwards;
+}
+
+@keyframes open-box {
+    /* Начало — без изменений */
+    0% {
+        transform: rotate(0deg) translate(0, 0);
+    }
+
+    /* крышка слегка приподнимается (левый край вверх) */
+    30% {
+        transform: rotate(-10deg) translate(0, -4px);
+    }
+
+    /* основной подъём */
+    65% {
+        transform: rotate(-24deg) translate(4px, -6px);
+    }
+
+    /* финальное раскрытие */
+    100% {
+        transform: rotate(-35deg) translate(8px, -4px);
+    }
+}

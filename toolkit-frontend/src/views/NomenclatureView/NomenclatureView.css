@@ -1,0 +1,8 @@
+.nomenclature {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border: 1px solid hsla(17.74, 91.18%, 60%, 1);
+    border-radius: 10px;
+    gap: 10px;
+}

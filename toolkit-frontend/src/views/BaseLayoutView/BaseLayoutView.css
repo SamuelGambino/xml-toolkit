@@ -1,0 +1,33 @@
+.base-layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 2rem;
+}
+
+.base-layout__loader {
+    display: flex;
+    align-self: center;
+}
+
+.base-layout__menu-nav {
+    display: flex;
+    position: absolute;
+    top: 5rem;
+    flex-direction: column;
+    padding-top: 10px;
+    gap: 10px;
+}
+
+.base-layout__content {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    margin-left: 110px;
+    width: calc(100% - 110px);
+    gap: 20px;
+}
+
+.base-layout__btn {
+    width: fit-content;
+}
