@@ -1,4 +1,5 @@
 import './assets/main.css'
+import 'handsontable/dist/handsontable.full.css';
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

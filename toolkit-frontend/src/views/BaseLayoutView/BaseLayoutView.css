@@ -31,3 +31,9 @@
 .base-layout__btn {
     width: fit-content;
 }
+
+.base-layout__page {
+    display: flex;
+    width: 100%;
+    padding-top: 2rem;
+}

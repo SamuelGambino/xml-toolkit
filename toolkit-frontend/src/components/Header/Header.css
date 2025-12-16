@@ -1,7 +1,9 @@
 .header {
     display: flex;
+    flex-direction: column;
     width: 100%;
     justify-content: center;
+    align-items: center;
     border-bottom: 1px solid hsla(6, 78%, 57%, 1);
 }
 
@@ -12,8 +14,138 @@
     transform-origin: 100% 0%;
 }
 
-.header__logo:hover .logo__top {
-    animation: open-box 0.9s linear forwards;
+.header__open .logo__top {
+    animation: open-box 0.5s linear forwards;
+    
+}
+
+.header__close .logo__top {
+    animation: close-box 0.5s linear forwards;
+}
+
+.header__nav {
+    position: relative;
+    overflow: hidden;
+}
+
+.header__nav-wrapper {
+    display: grid;
+    padding: 0;
+    margin: 0 0 10px;
+    width: 100%;
+    overflow: hidden;
+    grid-template-rows: 70px;
+    transition: grid-template-rows 0.5s ease;
+}
+
+.header__open .header__nav-wrapper {
+    transition-delay: 0s;
+    grid-template-rows: 70px;
+}
+
+.header__close .header__nav-wrapper {
+    transition-delay: 0.4s;
+    grid-template-rows: 0px;
+}
+
+.header__icon {
+    display: flex;
+    position: absolute;
+    top: 50%;
+    transform-origin: center;
+    max-height: 56px;
+}
+
+.header__icon--selected {
+    border-radius: 90px;
+    background-color: hsla(6, 78%, 57%, 0.2);
+}
+
+.header__icon:nth-child(1) { left: 10%; }
+.header__icon:nth-child(2) { left: 35%; }
+.header__icon:nth-child(3) { left: 60%; }
+.header__icon:nth-child(4) { left: 85%; }
+
+.header__icon {
+    --tx: 0px;
+    --ty: 0px;
+    --scale: 1;
+
+    transform:
+        translate(-50%, -50%)
+        translate(var(--tx), var(--ty))
+        scale(var(--scale));
+
+    transition:
+        transform 0.7s cubic-bezier(.4,0,.2,1),
+        opacity 0.4s ease;
+}
+
+.header__open .header__icon {
+    --tx: 0px;
+    --ty: 0px;
+    --scale: 1;
+    opacity: 1;
+}
+
+.header__close .header__icon:nth-child(1) {
+    --tx: calc(50vw - 10vw);
+}
+
+.header__close .header__icon:nth-child(2) {
+    --tx: calc(50vw - 35vw);
+}
+
+.header__close .header__icon:nth-child(3) {
+    --tx: calc(50vw - 60vw);
+}
+
+.header__close .header__icon:nth-child(4) {
+    --tx: calc(50vw - 85vw);
+}
+
+.header__close .header__icon {
+    --ty: 50px;
+    --scale: 0.2;
+    opacity: 0;
+}
+
+.header__icon > * {
+    animation: inherit;
+}
+
+.header__icon:nth-child(1) > * { animation: floatRandom1 8s ease-in-out infinite; }
+.header__icon:nth-child(2) > * { animation: floatRandom2 9s ease-in-out infinite; }
+.header__icon:nth-child(3) > * { animation: floatRandom3 7s ease-in-out infinite; }
+.header__icon:nth-child(4) > * { animation: floatRandom4 10s ease-in-out infinite; }
+
+@keyframes floatRandom1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(3px, -4px) rotate(0.5deg); }
+  40% { transform: translate(-2px, 2px) rotate(-0.3deg); }
+  60% { transform: translate(4px, -2px) rotate(0.7deg); }
+  80% { transform: translate(-3px, 3px) rotate(-0.5deg); }
+}
+
+@keyframes floatRandom2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-4px, -2px) rotate(-0.4deg); }
+  50% { transform: translate(2px, 3px) rotate(0.6deg); }
+  75% { transform: translate(3px, -3px) rotate(-0.8deg); }
+}
+
+@keyframes floatRandom3 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  30% { transform: translate(5px, 1px) rotate(0.9deg); }
+  60% { transform: translate(-3px, -4px) rotate(-0.7deg); }
+  90% { transform: translate(2px, 2px) rotate(0.3deg); }
+}
+
+@keyframes floatRandom4 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-2px, 5px) rotate(-0.6deg); }
+  45% { transform: translate(4px, -3px) rotate(1.1deg); }
+  75% { transform: translate(-5px, 2px) rotate(-0.9deg); }
 }
 
 @keyframes open-box {
@@ -23,17 +155,47 @@
     }
 
     /* крышка слегка приподнимается (левый край вверх) */
-    30% {
-        transform: rotate(-10deg) translate(0, -4px);
+    15% {
+        transform: rotate(10deg) translate(10px, -4px);
     }
 
     /* основной подъём */
-    65% {
-        transform: rotate(-24deg) translate(4px, -6px);
+    40% {
+        transform: rotate(24deg) translate(20px, -6px);
     }
 
     /* финальное раскрытие */
+    70% {
+        transform: rotate(35deg) translate(45px, -8px);
+    }
+
     100% {
-        transform: rotate(-35deg) translate(8px, -4px);
+        transform: rotate(60deg) translate(60px, -10px);
+    }
+}
+
+@keyframes close-box {
+    /* Начало — без изменений */
+    0% {
+        transform: rotate(60deg) translate(60px, -10px);
+    }
+
+    /* крышка слегка приподнимается (левый край вверх) */
+    30% {
+        transform: rotate(35deg) translate(45px, -8px);
+    }
+
+    /* основной подъём */
+    60% {
+        transform: rotate(24deg) translate(20px, -6px);
+    }
+
+    /* финальное раскрытие */
+    85% {
+        transform: rotate(10deg) translate(10px, -4px);
+    }
+
+    100% {
+        transform: rotate(0deg) translate(0, 0);
     }
 }

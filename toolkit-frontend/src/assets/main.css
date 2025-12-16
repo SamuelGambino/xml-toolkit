@@ -15,6 +15,7 @@ a,
 
 @media (hover: hover) {
   a:hover {
+    border-radius: 90px;
     background-color: hsla(6, 78%, 57%, 0.2);
   }
 }

@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import BaseLayoutView from '../views/BaseLayoutView/BaseLayoutView.vue'
-import ProfileView from '../views/ProfileView/ProfileView.vue'
+import IntroView from '@/views/IntroView/IntroView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,19 +12,28 @@ const router = createRouter({
         {
           path: '',
           name: 'intro',
-          component: ProfileView,
-          props: true
+          component: IntroView,
         },
-        // {
-        //   path: 'nomenclature',
-        //   name: 'Номенклатура',
-        //   component: import('../views/NomenclatureView/NomenclatureView.vue')
-        // },
-        // {
-        //   path: 'order-status',
-        //   name: 'Статус заказа',
-        //   component: import('../views/OrderStatusView/OrderStatusView.vue')
-        // }
+        {
+          path: 'convert',
+          name: 'convert',
+          component: import('../views/ConvertView/ConvertView.vue')
+        },
+        {
+          path: 'xml-editor',
+          name: 'xml-editor',
+          component: import('../views/EditorView/EditorView.vue')
+        },
+        {
+          path: 'merge-xmls',
+          name: 'merge-xmls',
+          component: import('../views/MergerView/MergerView.vue')
+        },
+        {
+          path: 'export-imgs',
+          name: 'export-imgs',
+          component: import('../views/ExporterView/ExporterView.vue')
+        },
       ]
     },
   ],
