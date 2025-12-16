@@ -107,8 +107,8 @@ watch(
       </router-link>
     </Header>
 
-    <section class="base-layout__page">
+    <div class="base-layout__page">
       <router-view />
-    </section>
+    </div>
   </main>
 </template>

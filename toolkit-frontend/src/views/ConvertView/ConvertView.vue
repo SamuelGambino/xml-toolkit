@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import "./ConvertView.css";
-import { ref } from 'vue'
+import { defineComponent, ref } from 'vue'
 import * as XLSX from 'xlsx'
 import { HotTable } from '@handsontable/vue3'
 import { registerAllModules } from 'handsontable/registry';
@@ -79,8 +79,8 @@ function exportTable(): void {
         <input type="file" @change="handleFileUpload" accept=".xlsx,.xls,.csv" />
       </div>
       <div v-if="hotData.length" class="convert__hot-container">
-        <HotTable :key="tableKey" :data="hotData" :rowHeaders="true" :colHeaders="true" :stretchH="'all'"
-          :manualColumnMove="true" :manualColumnResize="true" :search="true" :contextMenu="true"
+        <HotTable :key="tableKey" :themeName="'ht-theme-main-dark'" :data="hotData" :rowHeaders="true" :colHeaders="true" :stretchH="'all'" :search="true"
+          :manualColumnMove="true" :manualColumnResize="true" :contextMenu="true" :height="'auto'" :autoWrapRow="true" :autoWrapCol="true"
           licenseKey="non-commercial-and-evaluation" />
       </div>
       <button class="convert__table-button" v-if="hotData.length" @click="exportTable"><svg width="20" height="19"
