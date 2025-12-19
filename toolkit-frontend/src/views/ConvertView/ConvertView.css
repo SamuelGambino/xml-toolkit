@@ -1,56 +1,12 @@
 .convert {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
+    min-height: 70vh;
     gap: 10px;
-    width: 100%;
-    height: 75vh;
-}
-
-.convert__table {
-    display: flex;
-    position: relative;
-    flex-direction: column;
-    gap: 10px;
-    border: 1px solid hsla(6, 78%, 57%, 1);
-    border-radius: 10px;
-}
-
-.convert__toolbar {
-    display: flex;
-    border: 1px solid hsla(6, 78%, 57%, 1);
-    border-radius: 10px;
 }
 
 .convert__xml {
     display: flex;
     border: 1px solid hsla(6, 78%, 57%, 1);
     border-radius: 10px;
-}
-
-.convert__table-loader {
-    max-width: 800px;
-    margin: 2rem auto;
-    text-align: center;
-}
-
-.convert__hot-container {
-    overflow-x: hidden;
-    height: 100%;
-    margin: 2rem 0;
-}
-
-.convert__table-button {
-    display: flex;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: transparent;
-    border: 1px solid hsla(6, 78%, 57%, 1);
-    padding: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: hsla(6, 78%, 57%, 0.2);
 }

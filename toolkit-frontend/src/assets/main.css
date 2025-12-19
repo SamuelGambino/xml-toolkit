@@ -10,12 +10,13 @@ a,
   text-decoration: none;
   color: hsla(6, 78%, 57%, 1);
   transition: 0.4s;
-  padding: 3px;
+  /* padding: 3px; */
 }
 
 @media (hover: hover) {
   a:hover {
     border-radius: 90px;
+    box-shadow: 0 0 15px 5px hsla(6, 78%, 57%, 0.2); 
     background-color: hsla(6, 78%, 57%, 0.2);
   }
 }

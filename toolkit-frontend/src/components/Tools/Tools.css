@@ -1,0 +1,9 @@
+.tools {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: fit-content;
+    padding: 2rem;
+    border: 1px solid hsla(6, 78%, 57%, 1);
+    border-radius: 10px;
+}

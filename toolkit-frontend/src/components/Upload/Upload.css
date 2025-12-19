@@ -1,0 +1,26 @@
+.loader {
+    display: flex;
+    position: relative;
+    padding: 20px;
+    max-width: 800px;
+    margin: 2rem auto 0;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px dashed hsla(6, 78%, 57%, 1);
+}
+
+.loader__input {
+    display: flex;
+    cursor: pointer;
+    opacity: 0;
+    background-color: transparent;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 100%;
+}
+
+.loader__input::file-selector-button {
+    display: none;
+}

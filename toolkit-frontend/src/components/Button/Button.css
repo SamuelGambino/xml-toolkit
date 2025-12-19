@@ -7,7 +7,14 @@
   border: 0;
   border-radius: 8px;
   color: white;
+  border: 1px solid hsla(6, 78%, 57%, 1);
+  background-color: transparent;
   cursor: pointer;
+}
+
+.button:not(:disabled):hover {
+  box-shadow: 0 0 15px 5px hsla(6, 78%, 57%, 0.2);
+  background-color: hsla(6, 78%, 57%, 0.2);
 }
 
 .button:disabled {
@@ -15,7 +22,7 @@
   cursor: default;
 }
 
-.button[data-kind="primary"] {
+/* .button[data-kind="primary"] {
   background-color: hsla(6, 78%, 57%, 1);
 }
 .button[data-kind="primary"]:hover {
@@ -28,7 +35,7 @@
 
 .button[data-kind="secondary"]:hover {
   background-color: hsla(6, 78%, 57%, 1);
-}
+} */
 
 .button .loader-item {
   background-color: white;

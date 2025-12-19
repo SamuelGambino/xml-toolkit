@@ -58,6 +58,7 @@
 
 .header__icon--selected {
     border-radius: 90px;
+    box-shadow: 0 0 15px 5px hsla(6, 78%, 57%, 0.2); 
     background-color: hsla(6, 78%, 57%, 0.2);
 }
 
