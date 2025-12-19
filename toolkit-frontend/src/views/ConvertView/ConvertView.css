@@ -5,6 +5,25 @@
     gap: 10px;
 }
 
+.convert__wrapper {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 0 0 2rem;
+    border: 1px solid hsla(6, 78%, 57%, 1);
+    border-radius: 10px;
+}
+
+.convert__button {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.convert__wrapper:hover .convert__button {
+    opacity: 1;
+}
+
 .convert__xml {
     display: flex;
     border: 1px solid hsla(6, 78%, 57%, 1);

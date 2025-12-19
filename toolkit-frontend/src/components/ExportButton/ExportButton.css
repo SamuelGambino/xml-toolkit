@@ -1,13 +1,5 @@
-.table {
-    overflow-x: hidden;
-    height: 100%;
-    margin: 0;
-}
-
-.table__button {
+.export-button {
     display: flex;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
     position: absolute;
     top: 10px;
     right: 10px;
@@ -18,11 +10,7 @@
     cursor: pointer;
 }
 
-.table__button:hover {
+.convert__button:hover {
     box-shadow: 0 0 15px 5px hsla(6, 78%, 57%, 0.2);
     background-color: hsla(6, 78%, 57%, 0.2);
-}
-
-.table:hover .table__button {
-    opacity: 1;
 }
