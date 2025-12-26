@@ -1,21 +1,10 @@
-.order-status {
+.editor {
     display: flex;
+    position: relative;
     flex-direction: column;
-    padding: 15px;
-    border: 1px solid hsla(17.74, 91.18%, 60%, 1);
+    overflow: hidden;
+    gap: 2rem;
+    padding: 0 0 2rem;
+    border: 1px solid hsla(6, 78%, 57%, 1);
     border-radius: 10px;
-    gap: 10px;
-}
-
-.order-status__input {
-    display: flex;
-    gap: 10px;
-}
-
-.order-status__input-text {
-    background-color: transparent;
-    width: 100%;
-    border: none;
-    border-bottom: 1px solid hsla(17.74, 91.18%, 60%, 1);
-    color: hsla(17.74, 91.18%, 60%, 1);
 }

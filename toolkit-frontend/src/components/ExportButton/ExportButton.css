@@ -1,6 +1,7 @@
 .export-button {
     display: flex;
     position: absolute;
+    z-index: 160;
     top: 10px;
     right: 10px;
     background-color: transparent;

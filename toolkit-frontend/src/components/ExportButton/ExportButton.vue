@@ -7,20 +7,31 @@ import { storeToRefs } from "pinia";
 
 const { inputFile } = storeToRefs(useFileStore());
 
+const prop = defineProps({
+    type: {
+      type: String as () => "upload" | "convert" | "current" | null,
+      default: null
+    }
+})
+
 const exportFile = (): void => {
+  if (!prop.type) return;
   if (!inputFile.value.raw || !inputFile.value.type) return;
 
   switch (inputFile.value.type) {
     case "array":
-      exportExcel();
+      if (prop.type === "upload") exportExcel();
+      if (prop.type === "convert") exportXml();
       break;
 
     case "string":
-      exportCsv();
+      if (prop.type === "upload") exportCsv();
+      if (prop.type === "convert") exportXml();
       break;
 
     case "xml":
-      exportXml();
+      if (prop.type === "upload") exportXml();
+      if (prop.type === "convert") exportCsv();
       break;
 
     default:
@@ -51,12 +62,32 @@ const exportExcel = (): void => {
 };
 
 const exportCsv = () => {
-  const text = inputFile.value.raw as string;
-  saveAs(new Blob([text]), normalizeFileName("csv"));
+  let worksheet;
+
+  if (prop.type === "upload" && inputFile.value.table) {
+    worksheet = XLSX.utils.aoa_to_sheet(inputFile.value.table);
+  }
+
+  if (prop.type === "convert" && inputFile.value.convertResult?.csv) {
+    worksheet = XLSX.utils.aoa_to_sheet(inputFile.value.convertResult?.csv);
+  }
+
+  if (!worksheet) return;
+  const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+  saveAs(
+    new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+    normalizeFileName("csv")
+  );
 };
 
 const exportXml = () => {
-  const xml = inputFile.value.raw as string;
+  let xml;
+
+  if (prop.type === "upload") xml = inputFile.value.raw as string;
+  if (prop.type === "convert") xml = inputFile.value.convertResult?.xml as string;
+  if (!xml) return;
+  
   saveAs(new Blob([xml]), normalizeFileName("xml"));
 };
 

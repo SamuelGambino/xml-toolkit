@@ -9,6 +9,7 @@
     display: flex;
     position: relative;
     flex-direction: column;
+    overflow: hidden;
     gap: 2rem;
     padding: 0 0 2rem;
     border: 1px solid hsla(6, 78%, 57%, 1);
@@ -24,8 +25,6 @@
     opacity: 1;
 }
 
-.convert__xml {
-    display: flex;
-    border: 1px solid hsla(6, 78%, 57%, 1);
-    border-radius: 10px;
+.convert__button--convert {
+    height: fit-content;
 }

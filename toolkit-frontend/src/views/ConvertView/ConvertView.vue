@@ -8,10 +8,18 @@ import { computed, ref, watch } from "vue";
 import { useFileStore } from '@/stores/file';
 import ExportButton from "@/components/ExportButton/ExportButton.vue";
 import { storeToRefs } from "pinia";
+import XmlView from "@/components/XmlView/XmlView.vue";
 
+const { convertTableToXml, convertXmlToTable } = useFileStore();
 const { inputFile } = storeToRefs(useFileStore());
 
-const isDisabled = ref<boolean>(true);
+const convert = () => {
+  if(inputFile.value.type !== "xml") {
+    convertTableToXml(inputFile.value);
+  } else {
+    convertXmlToTable(inputFile.value);
+  }
+}
 </script>
 
 <template>
@@ -19,13 +27,16 @@ const isDisabled = ref<boolean>(true);
     <div class="convert__wrapper">
       <Upload />
       <Table v-if="inputFile.type !== 'xml'" />
-      <!-- <Table v-if="!inputFile.value.table.length && inputFile.value.raw.length" /> -->
-      <ExportButton class="convert__button" v-if="inputFile" />
+      <XmlView v-if="inputFile.type === 'xml'" />
+      <ExportButton class="convert__button" v-if="inputFile.raw" type="upload" />
     </div>
 
-    <Tools>
-      <Button :isDisabled="isDisabled">Конвертировать</Button>
-    </Tools>
-    <div class="convert__xml"></div>
+    <Button class="convert__button--convert" @click="convert" :isDisabled="inputFile.raw ? false : true">Конвертировать</Button>
+
+    <div class="convert__wrapper">
+      <XmlView v-if="inputFile.convertResult?.xml" />
+      <Table v-if="inputFile.convertResult?.csv" />
+      <ExportButton class="convert__button" v-if="inputFile.convertResult?.xml ||inputFile.convertResult?.csv" type="convert" />
+    </div>
   </section>
 </template>

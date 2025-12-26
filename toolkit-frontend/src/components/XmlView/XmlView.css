@@ -1,54 +1,13 @@
-.table {
-    display: flex;
-    position: relative;
-    flex-direction: column;
-    gap: 2rem;
-    padding: 0 0 2rem;
-    border: 1px solid hsla(6, 78%, 57%, 1);
-    border-radius: 10px;
-}
-
-.table__input {
-    display: flex;
-    cursor: pointer;
-    opacity: 0;
-    background-color: transparent;
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    height: 100%;
-    width: 100%;
-}
-
-.table__input::file-selector-button {
-    display: none;
-}
-
-.table__hot-container {
-    overflow-x: hidden;
-    height: 100%;
-    margin: 0;
-}
-
-.table__button {
-    display: flex;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: transparent;
-    border: 1px solid hsla(6, 78%, 57%, 1);
-    padding: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.table__button:hover {
-    box-shadow: 0 0 15px 5px hsla(6, 78%, 57%, 0.2);
-    background-color: hsla(6, 78%, 57%, 0.2);
-}
-
-.table:hover .table__button {
-    opacity: 1;
+.xml-editor {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  font-family: monospace;
+  background-color: transparent;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  border: none;
+  white-space: pre;
+  resize: none;
 }

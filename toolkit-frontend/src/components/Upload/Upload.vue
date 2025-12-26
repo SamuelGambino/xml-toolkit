@@ -76,7 +76,7 @@ const handleFileUpload = (event: Event): void => {
 
 <template>
     <div class="uploader">
-        <h2 class="uploader__filename">{{ inputFile.fileName || "Загрузка таблицы" }}</h2>
+        <h2 class="uploader__filename">{{ inputFile.fileName || "Загрузка файла" }}</h2>
         <input class="uploader__input" type="file" @change="handleFileUpload" accept=".xlsx,.xls,.csv,.xml" />
     </div>
 </template>
