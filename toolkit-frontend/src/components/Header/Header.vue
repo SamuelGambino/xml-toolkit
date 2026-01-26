@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import './Header.css';
 import { useRoute } from 'vue-router';
-import { useMenuState } from '@/stores/menu';
+import { useMenuState } from '@/stores/useMenu';
 
 const route = useRoute();
 const { setMenuState, isOpen } = useMenuState();

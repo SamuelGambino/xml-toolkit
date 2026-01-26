@@ -1,0 +1,14 @@
+.search {
+    display: flex;
+    width: 100%;
+    background-color: transparent;
+    color: white;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid hsla(6, 78%, 57%, 1);
+}
+
+.search:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

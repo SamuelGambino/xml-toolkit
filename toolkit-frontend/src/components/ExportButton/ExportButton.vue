@@ -1,105 +1,27 @@
 <script setup lang="ts">
 import "./ExportButton.css";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
-import { useFileStore } from "@/stores/file";
-import { storeToRefs } from "pinia";
+import { exportFile } from "@/services/export/fileExporter";
 
-const { inputFile } = storeToRefs(useFileStore());
+type Table = (string | number | boolean | null)[][];
 
-const prop = defineProps({
-    type: {
-      type: String as () => "upload" | "convert" | "current" | null,
-      default: null
-    }
-})
+interface IPropFile {
+  rawFileName: string;
+  type: "csv" | "xml" | "array" | null;
+  data: Table | string | null;
+}
 
-const exportFile = (): void => {
-  if (!prop.type) return;
-  if (!inputFile.value.raw || !inputFile.value.type) return;
+const props = defineProps<{
+    file: IPropFile
+}>()
 
-  switch (inputFile.value.type) {
-    case "array":
-      if (prop.type === "upload") exportExcel();
-      if (prop.type === "convert") exportXml();
-      break;
-
-    case "string":
-      if (prop.type === "upload") exportCsv();
-      if (prop.type === "convert") exportXml();
-      break;
-
-    case "xml":
-      if (prop.type === "upload") exportXml();
-      if (prop.type === "convert") exportCsv();
-      break;
-
-    default:
-      console.warn("Unsupported file type");
-  }
-};
-
-const exportExcel = (): void => {
-  const table = inputFile.value.table;
-  if (!table) return;
-
-  const worksheet = XLSX.utils.aoa_to_sheet(table);
-  const workbook = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-
-  const buffer = XLSX.write(workbook, {
-    bookType: "xlsx",
-    type: "array",
-  });
-
-  saveAs(
-    new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }),
-    normalizeFileName("xlsx")
-  );
-};
-
-const exportCsv = () => {
-  let worksheet;
-
-  if (prop.type === "upload" && inputFile.value.table) {
-    worksheet = XLSX.utils.aoa_to_sheet(inputFile.value.table);
-  }
-
-  if (prop.type === "convert" && inputFile.value.convertResult?.csv) {
-    worksheet = XLSX.utils.aoa_to_sheet(inputFile.value.convertResult?.csv);
-  }
-
-  if (!worksheet) return;
-  const csv = XLSX.utils.sheet_to_csv(worksheet);
-
-  saveAs(
-    new Blob([csv], { type: "text/csv;charset=utf-8;" }),
-    normalizeFileName("csv")
-  );
-};
-
-const exportXml = () => {
-  let xml;
-
-  if (prop.type === "upload") xml = inputFile.value.raw as string;
-  if (prop.type === "convert") xml = inputFile.value.convertResult?.xml as string;
-  if (!xml) return;
-  
-  saveAs(new Blob([xml]), normalizeFileName("xml"));
-};
-
-/* ===== helpers ===== */
-const normalizeFileName = (ext: string): string => {
-  const name = inputFile.value.fileName || "export";
-  return name.endsWith(`.${ext}`) ? name : `${name}.${ext}`;
+const onClick = () => {
+  if (!props.file.type || !props.file.data) return;
+  exportFile(props.file);
 };
 </script>
 
 <template>
-    <button class="export-button" @click="exportFile">
+    <button class="export-button" @click="onClick">
         <svg width="20" height="19" viewBox="0 0 20 19" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
                 d="M20 6.05849V17.3529C20 17.7897 19.8285 18.2087 19.5232 18.5176C19.2179 18.8265 18.8038 19 18.3721 19H1.62791C1.19616 19 0.782095 18.8265 0.476803 18.5176C0.171511 18.2087 0 17.7897 0 17.3529V6.05849C0 5.62165 0.171511 5.2027 0.476803 4.89381C0.782095 4.58492 1.19616 4.41138 1.62791 4.41138H4.4186C4.60364 4.41138 4.7811 4.48576 4.91193 4.61814C5.04277 4.75052 5.11628 4.93007 5.11628 5.11728C5.11628 5.3045 5.04277 5.48405 4.91193 5.61643C4.7811 5.74881 4.60364 5.82319 4.4186 5.82319H1.62791C1.56623 5.82319 1.50708 5.84798 1.46346 5.8921C1.41985 5.93623 1.39535 5.99608 1.39535 6.05849V17.3529C1.39535 17.4153 1.41985 17.4752 1.46346 17.5193C1.50708 17.5634 1.56623 17.5882 1.62791 17.5882H18.3721C18.4338 17.5882 18.4929 17.5634 18.5365 17.5193C18.5802 17.4752 18.6047 17.4153 18.6047 17.3529V6.05849C18.6047 5.99608 18.5802 5.93623 18.5365 5.8921C18.4929 5.84798 18.4338 5.82319 18.3721 5.82319H15.5814C15.3964 5.82319 15.2189 5.74881 15.0881 5.61643C14.9572 5.48405 14.8837 5.3045 14.8837 5.11728C14.8837 4.93007 14.9572 4.75052 15.0881 4.61814C15.2189 4.48576 15.3964 4.41138 15.5814 4.41138H18.3721C18.8038 4.41138 19.2179 4.58492 19.5232 4.89381C19.8285 5.2027 20 5.62165 20 6.05849Z"

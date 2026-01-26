@@ -1,82 +1,108 @@
 <script setup lang="ts">
 import "./Upload.css";
-import { ref } from 'vue'
-import { useFileStore } from '@/stores/file';
-import { storeToRefs } from "pinia";
+import { computed } from "vue";
 
-const { inputFile } = storeToRefs(useFileStore());
-
-const isCsv = (file: File): boolean => {
-    return file.name.toLowerCase().endsWith('.csv')
-}
-
-const isXml = (file: File) =>
-    file.name.toLowerCase().endsWith(".xml");
-
-const handleFileUpload = (event: Event): void => {
-    const input = event.target as HTMLInputElement
-    if (!input.files || !input.files.length) return
-
-    const file = input.files[0]
-    inputFile.value.fileName = file?.name || "";
-
-    const reader = new FileReader()
-
-    reader.onload = () => {
-        const result = reader.result;
-        if (!result) return;
-
-        if (file && isXml(file)) {
-            inputFile.value = {
-                fileName: file.name,
-                raw: result as string,
-                table: null,
-                type: "xml",
-            };
-            return;
-        }
-
-        if (file && isCsv(file)) {
-            const buffer = result as ArrayBuffer;
-            let text = new TextDecoder("utf-8").decode(buffer);
-
-            if (/Ð.|Ñ./.test(text)) {
-                text = new TextDecoder("windows-1251").decode(buffer);
-            }
-
-            inputFile.value = {
-                fileName: file.name,
-                raw: text,
-                table: null,
-                type: "string",
-            };
-            return; // ← ОБЯЗАТЕЛЬНО
-        }
-
-        // XLS / XLSX
-        if (file) {
-            inputFile.value = {
-                fileName: file.name,
-                raw: result as ArrayBuffer,
-                table: null,
-                type: "array",
-            };
-        };
+export type NormalizedFile =
+  | {
+      type: "xml";
+      fileName: string;
+      data: string;
+    }
+  | {
+      type: "csv";
+      fileName: string;
+      data: string;
+    }
+  | {
+      type: "array";
+      fileName: string;
+      data: ArrayBuffer;
     };
 
-    if (file && isXml(file)) {
-        reader.readAsText(file);
-    } else if (file) {
-        reader.readAsArrayBuffer(file);
+const props = defineProps<{
+  only?: "xml" | "table";
+  fileName?: string;
+}>();
+
+const emit = defineEmits<{
+  (e: "upload", file: NormalizedFile): void;
+}>();
+
+const accept = computed(() => {
+  if (!props.only) return ".xlsx,.xls,.csv,.xml";
+  if (props.only === "xml") return ".xml";
+  if (props.only === "table") return ".xlsx,.xls,.csv";
+  return "";
+});
+
+const isXml = (file: File) =>
+  file.name.toLowerCase().endsWith(".xml");
+
+const isCsv = (file: File) =>
+  file.name.toLowerCase().endsWith(".csv");
+
+const handleFileUpload = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (!input.files?.length) return;
+
+  const file = input.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    if (!reader.result) return;
+
+    /** XML */
+    if (isXml(file)) {
+      emit("upload", {
+        type: "xml",
+        fileName: file.name,
+        data: reader.result as string,
+      });
+      return;
     }
 
-    input.value = ''
-}
+    if (isCsv(file)) {
+      const buffer = reader.result as ArrayBuffer;
+      let text = new TextDecoder("utf-8").decode(buffer);
+
+      if (/Ð.|Ñ./.test(text)) {
+        text = new TextDecoder("windows-1251").decode(buffer);
+      }
+
+      emit("upload", {
+        type: "csv",
+        fileName: file.name,
+        data: text,
+      });
+      return;
+    }
+
+    emit("upload", {
+      type: "array",
+      fileName: file.name,
+      data: reader.result as ArrayBuffer,
+    });
+  };
+
+  if (isXml(file)) {
+    reader.readAsText(file);
+  } else {
+    reader.readAsArrayBuffer(file);
+  }
+
+  input.value = "";
+};
 </script>
 
 <template>
-    <div class="uploader">
-        <h2 class="uploader__filename">{{ inputFile.fileName || "Загрузка файла" }}</h2>
-        <input class="uploader__input" type="file" @change="handleFileUpload" accept=".xlsx,.xls,.csv,.xml" />
-    </div>
+  <div class="uploader">
+    <input
+      class="uploader__input"
+      type="file"
+      :accept="accept"
+      @change="handleFileUpload"
+    >{{ props.fileName ? props.fileName : "Выберите или перетащите файл" }}</input>
+  </div>
 </template>

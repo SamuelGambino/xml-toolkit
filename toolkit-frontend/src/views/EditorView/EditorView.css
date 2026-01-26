@@ -1,10 +1,44 @@
 .editor {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2rem;
+    height: 80vh;
+}
+
+.editor__wrapper {
     display: flex;
     position: relative;
     flex-direction: column;
     overflow: hidden;
-    gap: 2rem;
-    padding: 0 0 2rem;
+    gap: 5px;
+    padding: 5px;
+    height: 100%;
+}
+
+.editor__wrapper--border {
+    padding-bottom: 2rem;
     border: 1px solid hsla(6, 78%, 57%, 1);
     border-radius: 10px;
+}
+
+.editor__tools {
+    display: flex;
+    gap: 5px;
+}
+
+.editor__btn {
+    text-wrap: nowrap;
+}
+
+.editor__btn-export {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.editor__wrapper--document {
+    gap: 2rem;
+}
+
+.editor__wrapper--document:hover .editor__btn-export {
+    opacity: 1;
 }

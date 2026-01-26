@@ -7,41 +7,41 @@ import Account from '@/components/Account/Account.vue';
 import Loader from '@/components/Loader/Loader.vue';
 import { useRoute } from 'vue-router';
 import { ref, watch } from 'vue';
-import { useSbisStore } from '@/stores/sbis.ts';
+// import { useSbisStore } from '@/stores/sbis.ts';
 import { storeToRefs } from 'pinia';
 
 const pageTitle = ref<string>('');
 const route = useRoute();
-const { sbisOrg, setOrg, getSalesPoints, getPriceLists, getNomenclature, getOrderStatus } = useSbisStore();
-const { error, isLoading } = storeToRefs(useSbisStore());
+// const { sbisOrg, setOrg, getSalesPoints, getPriceLists, getNomenclature, getOrderStatus } = useSbisStore();
+// const { error, isLoading } = storeToRefs(useSbisStore());
 
 const getData = async () => {
   switch (route.name?.toString()) {
     case 'Аккаунт':
-      if (isLoading.value) break;
-      if (sbisOrg.sbisToken && !sbisOrg.salesPoint && !sbisOrg.priceList) {
-        await getSalesPoints();
-      } else if (sbisOrg.sbisToken && sbisOrg.salesPoint && !sbisOrg.priceList) {
-        await getPriceLists();
-      } else {
-        setOrg({ salesPoint: undefined, priceList: undefined });
-        await getSalesPoints();
-      }
+      // if (isLoading.value) break;
+      // if (sbisOrg.sbisToken && !sbisOrg.salesPoint && !sbisOrg.priceList) {
+      //   await getSalesPoints();
+      // } else if (sbisOrg.sbisToken && sbisOrg.salesPoint && !sbisOrg.priceList) {
+      //   await getPriceLists();
+      // } else {
+      //   setOrg({ salesPoint: undefined, priceList: undefined });
+      //   await getSalesPoints();
+      // }
       break;
     case 'Номенклатура':
-      if (isLoading.value) break;
-      if (sbisOrg.sbisToken && sbisOrg.priceList && sbisOrg.salesPoint) {
-        await getNomenclature();
-      } else error.value = "В аккаунте нет данных!";
+      // if (isLoading.value) break;
+      // if (sbisOrg.sbisToken && sbisOrg.priceList && sbisOrg.salesPoint) {
+      //   await getNomenclature();
+      // } else error.value = "В аккаунте нет данных!";
       break;
     case 'Статус заказа':
-      if (isLoading.value) break;
-      if (sbisOrg.sbisToken && sbisOrg.orderId) {
-        await getOrderStatus();
-      } else error.value = "Не достаточно данных!";
+      // if (isLoading.value) break;
+      // if (sbisOrg.sbisToken && sbisOrg.orderId) {
+      //   await getOrderStatus();
+      // } else error.value = "Не достаточно данных!";
       break;
     default:
-      error.value = "Неизвестное действие!";
+      // error.value = "Неизвестное действие!";
   }
 }
 

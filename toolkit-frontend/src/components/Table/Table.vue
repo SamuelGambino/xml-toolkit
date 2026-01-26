@@ -1,62 +1,59 @@
 <script setup lang="ts">
 import "./Table.css";
-import { ref, watch } from 'vue'
-import * as XLSX from 'xlsx'
-import { HotTable } from '@handsontable/vue3'
-import { registerAllModules } from 'handsontable/registry';
-import 'handsontable/styles/handsontable.css';
-import 'handsontable/styles/ht-theme-main.css';
-import { saveAs } from 'file-saver';
-import { useFileStore } from '@/stores/file';
-import { storeToRefs } from "pinia";
+import "handsontable/styles/handsontable.css";
+import "handsontable/styles/ht-theme-main.css";
 
-const { inputFile } = storeToRefs(useFileStore());
-const tableKey = ref(0)
+import { HotTable } from "@handsontable/vue3";
+import { registerAllModules } from "handsontable/registry";
+import { ref, watch } from "vue";
 
 registerAllModules();
 
-const parseWorkbook = (data: ArrayBuffer | string, type: 'array' | 'string') => {
-  const workbook = XLSX.read(data, { type })
-  const sheetName = workbook.SheetNames[0]
-  if (!sheetName) return
+type Table = (string | number | boolean | null)[][];
 
-  const worksheet = workbook.Sheets[sheetName]
-  if (!worksheet || !worksheet['!ref']) return
+const props = defineProps<{
+  data: Table | null;
+}>();
 
-  const range = XLSX.utils.decode_range(worksheet['!ref'])
-  worksheet['!ref'] = XLSX.utils.encode_range({
-    s: { r: 0, c: 0 },
-    e: range.e
-  })
+const emit = defineEmits<{
+  (e: "update", value: Table): void;
+}>();
 
-  inputFile.value.table = XLSX.utils.sheet_to_json(worksheet, {
-    header: 1,
-    defval: null,
-  });
+// локальная копия данных
+const localData = ref<Table>(props.data ? JSON.parse(JSON.stringify(props.data)) : []);
 
-  tableKey.value++
-}
-
+// следим за props.data, чтобы обновить локальные данные только если они реально поменялись
 watch(
-  () => inputFile.value,
-  (file) => {
-    if (!file) return;
-
-    if (
-      (file.type === "array" || file.type === "string") &&
-      file.raw
-    ) {
-      parseWorkbook(file.raw, file.type);
+  () => props.data,
+  (newData) => {
+    if (newData && JSON.stringify(newData) !== JSON.stringify(localData.value)) {
+      localData.value = JSON.parse(JSON.stringify(newData));
     }
-  }
+  },
+  { deep: true }
 );
+
+// обработчик изменений Handsontable
+watch(localData, (newVal) => {
+  emit("update", JSON.parse(JSON.stringify(newVal)));
+}, { deep: true });
 </script>
 
 <template>
-  <div v-if="inputFile.table" class="table">
-    <HotTable :key="tableKey" :themeName="'ht-theme-main-dark'"
-      :data="inputFile.table ? inputFile.table : inputFile.raw" :rowHeaders="true" :colHeaders="true" :stretchH="'all'"
-      :search="true" :manualColumnMove="true" :manualColumnResize="true" :contextMenu="true" :autoWrapRow="true"
-      :autoWrapCol="true" licenseKey="non-commercial-and-evaluation" />
+  <div v-if="localData.length" class="table">
+    <HotTable
+      themeName="ht-theme-main-dark"
+      :data="localData"
+      rowHeaders
+      colHeaders
+      stretchH="all"
+      search
+      manualColumnMove
+      manualColumnResize
+      contextMenu
+      autoWrapRow
+      autoWrapCol
+      licenseKey="non-commercial-and-evaluation"
+    />
   </div>
 </template>

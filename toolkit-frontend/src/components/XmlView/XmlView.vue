@@ -1,65 +1,47 @@
 <script setup lang="ts">
-import "./XmlView.css";
-import { computed, watch } from "vue";
-import { useFileStore } from "@/stores/file";
-import { storeToRefs } from "pinia";
+import { ref, watch, onMounted } from "vue";
+import MonacoEditor from "@guolao/vue-monaco-editor";
 
-const { inputFile } = storeToRefs(useFileStore())
-
-const formatXml = (xml: string): string => {
-  const PADDING = '  '; // 2 пробела
-  const reg = /(>)(<)(\/*)/g;
-
-  let formatted = '';
-  let pad = 0;
-
-  xml
-    .replace(reg, '$1\n$2$3')
-    .split('\n')
-    .forEach((node) => {
-      if (node.match(/^<\/\w/)) {
-        pad--;
-      }
-
-      formatted += PADDING.repeat(pad) + node + '\n';
-
-      if (node.match(/^<\w[^>]*[^/]>$/)) {
-        pad++;
-      }
-    });
-
-  return formatted.trim();
+interface XmlRange {
+  startLine: number;
+  startColumn: number;
+  endLine: number;
+  endColumn: number;
 }
 
-const xml = computed<string>({
-  get() {
-    if (inputFile.value.convertResult?.xml) {
-      return inputFile.value.convertResult.xml;
-    }
+const props = defineProps<{
+  inputXml: string;
+}>();
 
-    if (typeof inputFile.value.raw === "string") {
-      try {
-        return formatXml(inputFile.value.raw);
-      } catch {
-        return inputFile.value.raw;
-      }
-    }
+const emit = defineEmits<{
+  (e: "update", value: string): void;
+}>();
 
-    return "";
-  },
+const editorRef = ref<any>(null);
+const value = ref(props.inputXml);
 
-  set(value: string) {
-    if (inputFile.value.convertResult) {
-      inputFile.value.convertResult.xml = value;
-      return;
-    }
-
-    // fallback — редактирование исходного xml
-    inputFile.value.raw = value;
-  },
+watch(() => props.inputXml, (v) => {
+  if (v !== value.value) value.value = v;
 });
+
+const onChange = (val: string) => {
+  value.value = val;
+  emit("update", val);
+};
 </script>
 
 <template>
-  <textarea v-model="xml" spellcheck="false" class="xml-editor"></textarea>
+  <MonacoEditor
+    v-model:value="value"
+    language="xml"
+    theme="vs-dark"
+    :options="{
+      minimap: { enabled: false },
+      wordWrap: 'on',
+      fontSize: 13,
+      automaticLayout: true
+    }"
+    @change="onChange"
+    ref="editorRef"
+  />
 </template>

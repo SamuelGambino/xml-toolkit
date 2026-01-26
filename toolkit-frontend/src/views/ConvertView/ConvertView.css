@@ -26,5 +26,6 @@
 }
 
 .convert__button--convert {
+    opacity: 1;
     height: fit-content;
 }
