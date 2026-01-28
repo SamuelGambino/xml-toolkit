@@ -1,5 +1,4 @@
 import TypesAnalizateXml from "../TypesAnalizateXml";
-import { findXmlRange } from "./findXmlRange";
 
 export const normalizeModifiers = (xml: any, rawXml: string): TypesAnalizateXml.IModifiersGroup[] => {
   if (!xml?.modifiersGroups || !xml?.modifiers) {
@@ -20,22 +19,12 @@ export const normalizeModifiers = (xml: any, rawXml: string): TypesAnalizateXml.
     const groupId = Number(mod.modifiersGroupId);
     const modId = Number(mod["@_id"]);
 
-    const range =
-      findXmlRange(
-        rawXml,
-        `<modifier id="${modId}"`
-      ) ??
-      findXmlRange(
-        rawXml,
-        `<modifier id="${modId}" required="true">`
-      );
-
     const normalizedModifier: TypesAnalizateXml.IModifier = {
       id: modId,
       name: mod.name,
       price: Number(mod.price),
       required: mod["@_required"] === "true",
-      range
+      searchReq: `<modifier id="${modId}"`
     };
 
     if (!modifiersByGroupId.has(groupId)) {
@@ -48,16 +37,6 @@ export const normalizeModifiers = (xml: any, rawXml: string): TypesAnalizateXml.
   return groups.map((group: any) => {
     const id = Number(group["@_id"]);
 
-    const range =
-      findXmlRange(
-        rawXml,
-        `<modifiersGroup id="${id}">`
-      ) ??
-      findXmlRange(
-        rawXml,
-        `<modifiersGroup id="${id}" `
-      );
-
     return {
       id,
       name: group.name,
@@ -65,7 +44,7 @@ export const normalizeModifiers = (xml: any, rawXml: string): TypesAnalizateXml.
       minimum: Number(group.minimum),
       maximum: Number(group.maximum),
       modifiers: modifiersByGroupId.get(id) ?? [],
-      range
+      searchReq: `<modifiersGroup id="${id}"`
     };
   });
 }

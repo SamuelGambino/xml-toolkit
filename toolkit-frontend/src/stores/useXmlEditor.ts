@@ -10,18 +10,11 @@ const parser = new XMLParser({
   parseAttributeValue: true
 });
 
-interface XmlRange {
-  startLine: number;
-  startColumn: number;
-  endLine: number;
-  endColumn: number;
-};
-
 export const useXmlEditorStore = defineStore("xmlEditor", () => {
   const sourceXml = ref<string | null>(null);
   const parsedJson = ref<any>(null);
   const schema = ref<any>(null);
-  const activeRange = ref<XmlRange | null>(null);
+  const activeSearch = ref<string | null>(null);
 
   const loadXml = (xml: string) => {
     sourceXml.value = xml;
@@ -40,12 +33,12 @@ export const useXmlEditorStore = defineStore("xmlEditor", () => {
     }
   }
 
-  const selectRange = (range: XmlRange) => {
-    activeRange.value = range;
+  const selectRange = (req: string) => {
+    activeSearch.value = req;
   };
 
   const clearRange = () => {
-    activeRange.value = null;
+    activeSearch.value = null;
   }
 
   const generateSchema = () => {

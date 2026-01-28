@@ -18,7 +18,7 @@ export const tableToXml = (inputTable: Table | null): string | null => {
     name: idx("Название"),
     price: idx("Цена"),
     vendor: idx("Артикул"),
-    unit: idx("Ед. Измерения"),
+    unit: idx("Ед. Изм."),
     description: idx("Описание"),
     picture: idx("Изображение"),
     category: idx("Категория"),

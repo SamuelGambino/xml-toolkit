@@ -17,11 +17,12 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
     quantity: modifiersGroups.length,
     names: modifiersGroups.map(g => ({
       name: g.name,
-      range: g.range
+      searchReq: g.searchReq
     })),
     types: Array.from(typeCounter.entries()).map(([type, quantity]) => ({
       name: type,
-      quantity
+      quantity,
+      searchReq: `<type>${type}</type>`
     }))
   };
 
@@ -29,7 +30,7 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
     quantity: modifiersGroups.flatMap(modGroup => modGroup.modifiers).length,
     names: modifiersGroups.flatMap(modGroup => modGroup.modifiers.map(mod => ({
       name: `${modGroup.name} | ${mod.name} - ${mod.price}`,
-      range: mod.range,
+      searchReq: mod.searchReq,
     }))),
   };
 
@@ -37,7 +38,7 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
     quantity: categories.length,
     names: categories.map(cat => ({
       name: cat.name,
-      range: cat.range
+      searchReq: cat.searchReq
     })),
   };
 
@@ -46,17 +47,17 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
       category.products.map((product) => ({
         quantityParams: product.parameters.length,
         offerName: `${category.name} | ${product.name}`,
-        range: product.range
+        searchReq: product.searchReq
       }))
   );
 
-  const paramsCountMap = new Map<number, string[]>();
+  const paramsCountMap = new Map<number, { name: string, searchReq: string | null }[]>();
 
   for (const offer of offersWithParamsCount) {
     if (!paramsCountMap.has(offer.quantityParams)) {
       paramsCountMap.set(offer.quantityParams, []);
     }
-    paramsCountMap.get(offer.quantityParams)!.push(offer.offerName);
+    paramsCountMap.get(offer.quantityParams)!.push({ name: offer.offerName, searchReq: offer.searchReq });
   };
 
   const parametersData = Array.from(paramsCountMap.entries())
@@ -76,17 +77,29 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
 
     price: {
       true: allParameters.filter(p => p.price !== null && p.price !== 0).length,
-      false: allParameters.filter(p => p.price === null || p.price === 0).length
+      false: allParameters.filter(p => p.price === null || p.price === 0).length,
+      searchReq: {
+        true: `<price>\s*[^<]+\s*</price>`,
+        false: `<price>\s*</price>`
+      }
     },
 
     description: {
       true: allParameters.filter(p => p.description && p.description !== "").length,
-      false: allParameters.filter(p => !p.description || p.description === "").length
+      false: allParameters.filter(p => !p.description || p.description === "").length,
+      searchReq: {
+        true: `<description>\s*[^<]+\s*</description>`,
+        false: `<description>\s*</description>>`
+      }
     },
 
     descriptionIndex: {
       true: allParameters.filter(p => p.descriptionIndex !== null && p.descriptionIndex !== 0).length,
-      false: allParameters.filter(p => p.descriptionIndex === null || p.descriptionIndex === 0).length
+      false: allParameters.filter(p => p.descriptionIndex === null || p.descriptionIndex === 0).length,
+      searchReq: {
+        true: `<descriptionIndex>\s*[^<]+\s*</descriptionIndex>`,
+        false: `<descriptionIndex>\s*</descriptionIndex>`
+      }
     },
 
     data: parametersData
@@ -95,6 +108,7 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
   const offersWithUrls = categories.flatMap(
     (category) =>
       category.products.map((product) => ({
+        prodId: product.id,
         offerName: `${category.name} | ${product.name}`,
         url: product.picture,
       }))
@@ -109,11 +123,15 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
     quantity: offers.length,
     names: offersWithParamsCount.map(offer => ({
       name: offer.offerName,
-      range: offer.range
+      searchReq: offer.searchReq
     })),
     description: {
       true: offers.filter(o => o.description).length,
-      false: offers.filter(o => !o.description || !o.description).length
+      false: offers.filter(o => !o.description || !o.description).length,
+      searchReq: {
+        true: `<description>\s*[^<]+\s*</description>`,
+        false: `<description>\s*</description>`
+      }
     },
     picture: {
       true: trueUrls.length,
@@ -121,10 +139,12 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
       trueData: trueUrls.map(offer => ({
         url: offer.url,
         name: offer.offerName,
+        searchReq: `<offer id="${offer.prodId}"`
       })),
       falseData: falseUrls.map(offer => ({
         url: offer.url,
         name: offer.offerName,
+        searchReq: `<offer id="${offer.prodId}"`
       })),
     },
     parameters: parameterMD,

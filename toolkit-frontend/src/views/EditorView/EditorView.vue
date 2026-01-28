@@ -10,14 +10,10 @@ import { storeToRefs } from "pinia";
 import { useXmlEditorStore } from "@/stores/useXmlEditor";
 import SchemaXml from "@/components/SchemaXml/SchemaXml.vue";
 
-interface XmlRange {
-  startLine: number;
-  startColumn: number;
-  endLine: number;
-  endColumn: number;
-}
-
-const searchRange = ref<XmlRange>();
+const searchReq = ref<{
+  req: string,
+  regx: boolean,
+} | null>(null);
 const search = ref();
 const uploadedFile = ref<NormalizedFile | null>(null);
 const { loadXml, parseXml, generateSchema } = useXmlEditorStore();
@@ -55,13 +51,16 @@ const exportFile = computed(() => {
         <Button class="editor__btn" :isDisabled="sourceXml ? false : true">test</Button>
       </div>
       <div class="editor__wrapper editor__wrapper--border">
-        <SchemaXml v-if="schema" :meta="schema" />
+        <SchemaXml v-if="schema" :meta="schema" v-on:search-req="(req) => {
+          searchReq = req;
+          console.log('Сработал emit, с данными: ' + req);
+          }" />
       </div>
     </div>
 
     <div class="editor__wrapper editor__wrapper--border editor__wrapper--document">
       <Upload @upload="onUpload" :fileName="uploadedFile?.fileName" only="xml" />
-      <XmlView v-if="sourceXml" :range="searchRange" :inputXml="sourceXml ?? ''" v-on:update="(value) => {
+      <XmlView v-if="sourceXml" :searchReq="searchReq" :inputXml="sourceXml ?? ''" v-on:update="(value) => {
         sourceXml = value;
         parseXml();
         generateSchema();

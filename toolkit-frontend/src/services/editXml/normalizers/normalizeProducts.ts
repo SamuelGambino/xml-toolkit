@@ -1,5 +1,4 @@
 import TypesAnalizateXml from "../TypesAnalizateXml";
-import { findXmlRange } from "./findXmlRange";
 
 export const normalizeProducts = (xml: any, rawXml: string): TypesAnalizateXml.ICategories[] => {
   if (!xml?.categories || !xml?.offers) return [];
@@ -18,16 +17,6 @@ export const normalizeProducts = (xml: any, rawXml: string): TypesAnalizateXml.I
     const categoryId = Number(product.categoryId);
     const prodId = Number(product["@_id"]);
 
-    const range =
-      findXmlRange(
-        rawXml,
-        `<offer id="${prodId}" available="true">`
-      ) ??
-      findXmlRange(
-        rawXml,
-        `<offer id="${prodId}" `
-      );
-
     const normalizedProduct: TypesAnalizateXml.IProduct = {
       id: prodId,
       available: product["@_available"] === "true",
@@ -36,7 +25,7 @@ export const normalizeProducts = (xml: any, rawXml: string): TypesAnalizateXml.I
       picture: product.picture ?? [],
       parameters: normalizeParameters(product),
       categoryId,
-      range
+      searchReq: `<offer id="${prodId}" `,
     };
 
     if (!productsByCategory.has(categoryId)) {
@@ -49,20 +38,11 @@ export const normalizeProducts = (xml: any, rawXml: string): TypesAnalizateXml.I
   return categoriesRaw.map((category: any) => {
     const id = Number(category["@_id"]);
 
-    const range =
-      findXmlRange(
-        rawXml,
-        `<category id="${id}">`
-      ) ??
-      findXmlRange(
-        rawXml,
-        `<category id="${id}"`
-      );
-
     return {
       id,
       name: category["#text"],
-      products: productsByCategory.get(id) ?? []
+      products: productsByCategory.get(id) ?? [],
+      searchReq: `<category id="${id}"`
     };
   });
 }

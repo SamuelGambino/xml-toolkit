@@ -4,7 +4,7 @@ namespace TypesAnalizateXml {
     name: string;
     price: number;
     required: boolean;
-    range: XmlRange | null;
+    searchReq: string | null;
   };
 
   export interface IModifiersGroup {
@@ -14,7 +14,7 @@ namespace TypesAnalizateXml {
     minimum: number;
     maximum: number;
     modifiers: IModifier[];
-    range: XmlRange | null;
+    searchReq: string | null;
   };
 
   export interface IParameter {
@@ -32,21 +32,14 @@ namespace TypesAnalizateXml {
     picture: string;
     parameters: IParameter[];
     categoryId: string | number;
-    range: XmlRange | null;
+    searchReq: string | null;
   }
 
   export interface ICategories {
     id: number;
     name: string;
     products: IProduct[];
-    range: XmlRange | null;
-  }
-
-  export interface XmlRange {
-    startLine: number;
-    startColumn: number;
-    endLine: number;
-    endColumn: number;
+    searchReq: string | null;
   }
 
   export interface INormalizeXml {
@@ -58,14 +51,19 @@ namespace TypesAnalizateXml {
     quantity: number;
     names?: {
       name: string;
-      range: XmlRange | null;
+      searchReq: string | null;
     }[];
     name?: string;
+    searchReq?: string | null;
   }
 
   export interface IDefaultCheckMD {
     true: number;
     false: number;
+    searchReq?: {
+      true: string;
+      false: string;
+    }
   }
 
   export interface IModGroupsMD extends IDefaultMD {
@@ -80,18 +78,23 @@ namespace TypesAnalizateXml {
     data: {
       quantityParams: number;
       offersWhoHas: number;
-      offers: string[];
+      offers: {
+        name: string,
+        searchReq: string | null
+      }[];
     }[]
   }
 
   export interface IPictureCheckMD extends IDefaultCheckMD {
     trueData: {
       url: string;
-      name: string
+      name: string;
+      searchReq: string;
     }[],
     falseData: {
       url: string;
       name: string
+      searchReq: string;
     }[]
   }
 

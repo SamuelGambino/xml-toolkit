@@ -1,28 +1,56 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch } from "vue";
 import MonacoEditor from "@guolao/vue-monaco-editor";
-
-interface XmlRange {
-  startLine: number;
-  startColumn: number;
-  endLine: number;
-  endColumn: number;
-}
 
 const props = defineProps<{
   inputXml: string;
+  searchReq: {
+    req: string,
+    regx: boolean,
+  } | null;
 }>();
 
 const emit = defineEmits<{
   (e: "update", value: string): void;
 }>();
 
-const editorRef = ref<any>(null);
 const value = ref(props.inputXml);
+const editor = ref<any>(null);
 
 watch(() => props.inputXml, (v) => {
   if (v !== value.value) value.value = v;
 });
+
+const onMount = (editorInstance: any) => {
+  editor.value = editorInstance;
+};
+
+watch(
+  () => props.searchReq,
+  async (query) => {
+    if (!query?.req || !editor.value) return;
+
+    const ed = editor.value;
+
+    ed.focus();
+
+    await ed.getAction('editor.action.startFindReplaceAction').run();
+
+    const controller = ed.getContribution('editor.contrib.findController');
+    if (!controller) return;
+
+    const state = controller.getState();
+    if (!state) return;
+
+    state.change({
+      searchString: query.req,
+      isRegex: query.regx,
+      matchCase: false,
+      wholeWord: false,
+      preserveCase: false
+    }, false);
+  }
+);
 
 const onChange = (val: string) => {
   value.value = val;
@@ -42,6 +70,6 @@ const onChange = (val: string) => {
       automaticLayout: true
     }"
     @change="onChange"
-    ref="editorRef"
+    @mount="onMount"
   />
 </template>
