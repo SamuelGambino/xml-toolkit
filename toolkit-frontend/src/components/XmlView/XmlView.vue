@@ -4,7 +4,7 @@ import MonacoEditor from "@guolao/vue-monaco-editor";
 
 const props = defineProps<{
   inputXml: string;
-  searchReq: {
+  searchReq?: {
     req: string,
     regx: boolean,
   } | null;
@@ -25,11 +25,14 @@ const onMount = (editorInstance: any) => {
   editor.value = editorInstance;
 };
 
+let lastQuery = '';
+
 watch(
   () => props.searchReq,
   async (query) => {
-    if (!query?.req || !editor.value) return;
+    if (!query || query.req === lastQuery) return;
 
+    lastQuery = query.req;
     const ed = editor.value;
 
     ed.focus();
@@ -42,13 +45,20 @@ watch(
     const state = controller.getState();
     if (!state) return;
 
-    state.change({
-      searchString: query.req,
-      isRegex: query.regx,
-      matchCase: false,
-      wholeWord: false,
-      preserveCase: false
-    }, false);
+    state.change(
+      {
+        searchString: query.req,
+        isRegex: query.regx,
+        matchCase: false,
+        wholeWord: false,
+        preserveCase: false
+      },
+      false
+    );
+
+    queueMicrotask(() => {
+      editor.value?.focus();
+    });
   }
 );
 
@@ -59,17 +69,10 @@ const onChange = (val: string) => {
 </script>
 
 <template>
-  <MonacoEditor
-    v-model:value="value"
-    language="xml"
-    theme="vs-dark"
-    :options="{
-      minimap: { enabled: false },
-      wordWrap: 'on',
-      fontSize: 13,
-      automaticLayout: true
-    }"
-    @change="onChange"
-    @mount="onMount"
-  />
+  <MonacoEditor v-model:value="value" language="xml" theme="vs-dark" :options="{
+    minimap: { enabled: false },
+    wordWrap: 'on',
+    fontSize: 13,
+    automaticLayout: true
+  }" @change="onChange" @mount="onMount" />
 </template>

@@ -2,16 +2,14 @@ import type { Table } from "./TypesConvert";
 import { escapeXml } from "./xmlUtils";
 
 export const tableToXml = (inputTable: Table | null): string | null => {
-  if (!inputTable) return null;
+  if (!inputTable || inputTable.length < 2) return null;
 
   const table = inputTable;
-  if (!table || table.length < 2) return null;
-
   const headers = table[0];
 
   const idx = (name: string) =>
     headers?.findIndex(
-      h => h?.toString().toLowerCase() === name.toLowerCase()
+      h => h?.toString().trim().toLowerCase() === name.toLowerCase()
     );
 
   const IDX = {
@@ -23,110 +21,230 @@ export const tableToXml = (inputTable: Table | null): string | null => {
     picture: idx("Изображение"),
     category: idx("Категория"),
     subcategory: idx("Подкатегория"),
+    optionsGroup: idx("группа опций"),
+    optionsMin: idx("min опций"),
+    optionsMax: idx("max опций"),
+    optionName: idx("опции"),
+    optionPrice: idx("цена опции"),
   };
 
-  const useCategoryColumns = IDX.category !== -1;
+  /* =========================
+     КАТЕГОРИИ
+  ========================== */
 
   const categoriesXml: string[] = [];
-  const offersXml: string[] = [];
-
-  let categoryIdCounter = 1;
-
   const categoryMap = new Map<string, number>();
-  const subCategoryMap = new Map<string, number>();
+  let currentCategoryId: number | null = null;
+
+  let categoryIndex = 1;
 
   const getCategoryId = (name: string) => {
     if (!categoryMap.has(name)) {
-      const id = categoryIdCounter++;
+      const id = categoryIndex * 10000;
+      categoryIndex++;
       categoryMap.set(name, id);
+
       categoriesXml.push(
-        `      <category id="${id}">${escapeXml(name)}</category>`
+        `<category id="${id}">${escapeXml(name)}</category>`
       );
     }
     return categoryMap.get(name)!;
   };
 
-  const getSubCategoryId = (catName: string, subName: string) => {
-    const key = `${catName}::${subName}`;
-    if (!subCategoryMap.has(key)) {
-      const parentId = getCategoryId(catName);
-      const id = categoryIdCounter++;
-      subCategoryMap.set(key, id);
-      categoriesXml.push(
-        `      <category id="${id}" parent_id="${parentId}">${escapeXml(subName)}</category>`
-      );
+  /* =========================
+     МОДИФИКАТОРЫ
+  ========================== */
+
+  const modifiersGroupsXml: string[] = [];
+  const modifiersXml: string[] = [];
+
+  const modifiersGroupMap = new Map<string, number>();
+  const modifierMap = new Map<string, number>();
+  const modifierCounterPerGroup = new Map<number, number>();
+
+  let modifiersGroupIndex = 1;
+
+  const getModifiersGroupId = (
+    groupName: string,
+    min: number,
+    max: number
+  ) => {
+    if (!modifiersGroupMap.has(groupName)) {
+      const id = modifiersGroupIndex * 1000;
+      modifiersGroupIndex++;
+
+      modifiersGroupMap.set(groupName, id);
+
+      modifiersGroupsXml.push(`
+<modifiersGroup id="${id}">
+  <name>${escapeXml(groupName)}</name>
+  <type>one_one</type>
+  <minimum>${min}</minimum>
+  <maximum>${max}</maximum>
+</modifiersGroup>`.trim());
     }
-    return subCategoryMap.get(key)!;
+
+    return modifiersGroupMap.get(groupName)!;
   };
 
-  /** ===== обход строк ===== */
+  const getModifierId = (
+    modifierName: string,
+    price: number,
+    groupId: number
+  ) => {
+    const key = `${groupId}::${modifierName}`;
+
+    if (!modifierMap.has(key)) {
+      const index =
+        (modifierCounterPerGroup.get(groupId) ?? 0) + 1;
+
+      modifierCounterPerGroup.set(groupId, index);
+
+      const id = groupId + index;
+
+      modifierMap.set(key, id);
+
+      modifiersXml.push(`
+<modifier id="${id}" required="true">
+  <name>${escapeXml(modifierName)}</name>
+  <price>${price}</price>
+  <modifiersGroupId>${groupId}</modifiersGroupId>
+</modifier>`.trim());
+    }
+
+    return modifierMap.get(key)!;
+  };
+
+  /* =========================
+     ТОВАРЫ
+  ========================== */
+
+  const offersXml: string[] = [];
+  const productCounterPerCategory = new Map<number, number>();
+  const offerModifiersMap = new Map<number, Set<number>>();
+
+  let currentProductId: number | null = null;
+  let currentGroupId: number | null = null;
+
   for (let i = 1; i < table.length; i++) {
     const row = table[i];
     if (!row) continue;
 
-    const cell = (row: any[], idx?: number) => {
-      if (idx === undefined || idx === -1) return null;
-      return row[idx];
-    };
+    const cell = (idx?: number) =>
+      idx === undefined || idx === -1 ? null : row[idx];
 
-    const name = cell(row, IDX.name)?.toString().trim();
-    if (!name) continue;
+    const name = cell(IDX.name)?.toString().trim();
 
-    /** ===== определяем categoryId ===== */
-    let categoryId: number;
+    /* ========= НОВЫЙ ТОВАР ========= */
 
-    if (useCategoryColumns) {
-      const catName = cell(row, IDX.category)?.toString().trim();
-      if (!catName) continue; // без категории товар не создаём
+    if (name) {
+      const categoryName =
+        cell(IDX.category)?.toString().trim();
 
-      const subName =
-        IDX.subcategory !== -1
-          ? cell(row, IDX.subcategory)?.toString().trim()
-          : "";
-
-      categoryId = subName
-        ? getSubCategoryId(catName, subName)
-        : getCategoryId(catName);
-    } else {
-      /** fallback — старая логика */
-      const isCategoryRow = IDX.price === -1 || cell(row, IDX.price) == null;
-      if (isCategoryRow) {
-        getCategoryId(name);
-        continue;
+      if (categoryName) {
+        currentCategoryId = getCategoryId(categoryName);
       }
-      categoryId = categoryIdCounter - 1;
+
+      if (!currentCategoryId) continue;
+
+      const productIndex =
+        (productCounterPerCategory.get(currentCategoryId) ?? 0) + 1;
+
+      productCounterPerCategory.set(
+        currentCategoryId,
+        productIndex
+      );
+
+      const productId = currentCategoryId + productIndex;
+      currentProductId = productId;
+      currentGroupId = null;
+
+      const price = Number(cell(IDX.price)) || 0;
+      const unit = cell(IDX.unit)?.toString().trim() ?? "";
+      const description = cell(IDX.description)?.toString() ?? "";
+      const picture = cell(IDX.picture)?.toString() ?? "";
+
+      const parameterId = (productId + 1000) * 10 + 1;
+
+      offersXml.push(`
+<offer id="${productId}" available="true">
+  <name>${escapeXml(name)}</name>
+  <description><![CDATA[${description}]]></description>
+  <picture>${escapeXml(picture)}</picture>
+  <parameters>
+    <parameter id="${parameterId}">
+      <price>${price}</price>
+      <description>${escapeXml(unit)}</description>
+      <descriptionIndex>10</descriptionIndex>
+    </parameter>
+  </parameters>
+  <categoryId>${currentCategoryId}</categoryId>
+</offer>`.trim());
     }
 
-    /** ===== товар ===== */
-    const price = Number(cell(row, IDX.price)) || 0;
-    const vendor = IDX.vendor !== -1 ? cell(row, IDX.vendor)?.toString() : "";
+    /* ========= ГРУППА МОДИФИКАТОРОВ ========= */
 
-    const description =
-      IDX.description !== -1
-        ? cell(row, IDX.description)?.toString() : "";
+    const groupName =
+      cell(IDX.optionsGroup)?.toString().trim();
 
-    const picture =
-      IDX.picture !== -1
-        ? cell(row, IDX.picture)?.toString() : "";
+    if (groupName && currentProductId) {
+      const min = Number(cell(IDX.optionsMin)) || 0;
+      const max = Number(cell(IDX.optionsMax)) || 1;
 
-    offersXml.push(`
-      <offer id="${vendor ?? ""}" available="true">
-        <name>${escapeXml(name)}</name>
-        <description><![CDATA[${escapeXml(description)}]]></description>
-        <picture>${escapeXml(picture)}</picture>
-        <parameters>
-          <parameter id="${vendor ?? ""}">
-            <price>${price}</price>
-            <description>1</description>
-            <descriptionIndex>10</descriptionIndex>
-          </parameter>
-        </parameters>
-        <categoryId>${categoryId}</categoryId>
-      </offer>
-    `.trim());
+      const groupId = getModifiersGroupId(groupName, min, max);
+      currentGroupId = groupId;
+
+      if (!offerModifiersMap.has(currentProductId)) {
+        offerModifiersMap.set(currentProductId, new Set());
+      }
+
+      offerModifiersMap.get(currentProductId)!.add(groupId);
+    }
+
+    /* ========= МОДИФИКАТОР ========= */
+
+    const optionName =
+      cell(IDX.optionName)?.toString().trim();
+
+    if (optionName && currentGroupId) {
+      const optionPrice =
+        Number(cell(IDX.optionPrice)) || 0;
+
+      getModifierId(optionName, optionPrice, currentGroupId);
+    }
   }
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+  /* =========================
+     ДОБАВЛЯЕМ СВЯЗЬ ГРУПП К ТОВАРАМ
+  ========================== */
+
+  for (let i = 0; i < offersXml.length; i++) {
+    const match = offersXml[i]?.match(/<offer id="(\d+)"/);
+    if (!match) continue;
+
+    const productId = Number(match[1]);
+    const groups = offerModifiersMap.get(productId);
+
+    if (!groups || groups.size === 0) continue;
+
+    const groupsXml = `
+  <modifiersGroupsIds>
+    ${[...groups]
+        .map(id => `<modifiersGroupId>${id}</modifiersGroupId>`)
+        .join("\n    ")}
+  </modifiersGroupsIds>`;
+
+    offersXml[i] = offersXml[i]?.replace(
+      `</offer>`,
+      `${groupsXml}\n</offer>`
+    ) ?? "";
+  }
+
+  /* =========================
+     ИТОГОВЫЙ XML
+  ========================== */
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <yml_catalog date="${new Date().toISOString()}">
   <shop>
     <name>Organization name</name>
@@ -135,14 +253,23 @@ export const tableToXml = (inputTable: Table | null): string | null => {
     <currencies>
       <currency id="RUR" rate="1" />
     </currencies>
+
+    <modifiersGroups>
+${modifiersGroupsXml.join("\n")}
+    </modifiersGroups>
+
+    <modifiers>
+${modifiersXml.join("\n")}
+    </modifiers>
+
     <categories>
 ${categoriesXml.join("\n")}
     </categories>
+
     <offers>
 ${offersXml.join("\n")}
     </offers>
+
   </shop>
 </yml_catalog>`;
-
-  return xml;
-}
+};

@@ -96,53 +96,27 @@ const resultTableData = computed(() => (
     <div class="convert__wrapper">
       <Upload @upload="onUpload" :fileName="uploadedFile?.fileName" />
 
-      <Table
-        v-if="showSourceTable"
-        :data="sourceTableData"
-        v-on:update="(value) => inputFile.table.data = value"
-      />
+      <Table v-if="showSourceTable" :data="sourceTableData" v-on:update="(value) => inputFile.table.data = value" />
 
-      <XmlView
-        v-if="showSourceXml"
-        :inputXml="inputFile.xml.data ?? ''"
-        v-on:update="(value) => inputFile.xml.data = value"
-      />
+      <XmlView v-if="showSourceXml" :inputXml="inputFile.xml.data ?? ''"
+        v-on:update="(value) => inputFile.xml.data = value" />
 
-      <ExportButton
-      class="convert__button"
-        v-if="exportSourceFile"
-        type="upload"
-        :file="exportSourceFile"
-      />
+      <ExportButton class="convert__button" v-if="exportSourceFile" type="upload" :file="exportSourceFile" />
     </div>
 
-    <Button
-      class="convert__button convert__button--convert"
-      :isDisabled="!canConvert"
-      @click="convert"
-    >
-      Конвертировать
-    </Button>
+    <div class="convert__wrapper">
+      <Button class="convert__button convert__button--convert" :isDisabled="!canConvert" @click="convert">
+        Конвертировать
+      </Button>
+    </div>
 
     <div class="convert__wrapper">
-      <XmlView
-        v-if="showResultXml"
-        :inputXml="inputFile.xml.data ?? ''"
-        v-on:update="(value) => inputFile.xml.data = value"
-      />
+      <XmlView v-if="showResultXml" :inputXml="inputFile.xml.data ?? ''"
+        v-on:update="(value) => inputFile.xml.data = value" />
 
-      <Table
-        v-if="showResultTable"
-        :data="resultTableData"
-        v-on:update="(value) => inputFile.table.data = value"
-      />
+      <Table v-if="showResultTable" :data="resultTableData" v-on:update="(value) => inputFile.table.data = value" />
 
-      <ExportButton
-      class="convert__button"
-        v-if="exportResultFile"
-        type="convert"
-        :file="exportResultFile"
-      />
+      <ExportButton class="convert__button" v-if="exportResultFile" type="convert" :file="exportResultFile" />
     </div>
   </section>
 </template>

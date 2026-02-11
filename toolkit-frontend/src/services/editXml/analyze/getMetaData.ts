@@ -88,8 +88,10 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
       true: allParameters.filter(p => p.description && p.description !== "").length,
       false: allParameters.filter(p => !p.description || p.description === "").length,
       searchReq: {
-        true: `<description>\s*[^<]+\s*</description>`,
-        false: `<description>\s*</description>>`
+        true: `</price>\s*<description>\s*[^<]*\s*</description>
+`,
+        false: `</price>\s*<description>\s*</description>
+`
       }
     },
 
@@ -129,8 +131,9 @@ export const getMetaData = (normalizeData: TypesAnalizateXml.INormalizeXml): Typ
       true: offers.filter(o => o.description).length,
       false: offers.filter(o => !o.description || !o.description).length,
       searchReq: {
-        true: `<description>\s*[^<]+\s*</description>`,
-        false: `<description>\s*</description>`
+        true: `<description><![CDATA[`,
+        false: `<description></description>
+`
       }
     },
     picture: {

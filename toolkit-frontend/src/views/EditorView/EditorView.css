@@ -13,12 +13,10 @@
     gap: 5px;
     padding: 5px;
     height: 100%;
-}
-
-.editor__wrapper--border {
+    min-width: 15vw;
     padding-bottom: 2rem;
     border: 1px solid hsla(6, 78%, 57%, 1);
-    border-radius: 10px;
+    border-radius: 4px;
 }
 
 .editor__tools {
@@ -37,6 +35,7 @@
 
 .editor__wrapper--document {
     gap: 2rem;
+    min-width: 60vw;
 }
 
 .editor__wrapper--document:hover .editor__btn-export {
