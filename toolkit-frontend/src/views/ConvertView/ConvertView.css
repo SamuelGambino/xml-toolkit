@@ -31,3 +31,9 @@
     opacity: 1;
     height: fit-content;
 }
+
+.convert__error {
+    color: hsl(0, 70%, 50%);
+    margin: 0;
+    font-size: 0.9rem;
+}

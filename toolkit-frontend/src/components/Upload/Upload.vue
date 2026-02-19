@@ -7,16 +7,19 @@ export type NormalizedFile =
       type: "xml";
       fileName: string;
       data: string;
+      file?: File;
     }
   | {
       type: "csv";
       fileName: string;
       data: string;
+      file?: File;
     }
   | {
       type: "array";
       fileName: string;
       data: ArrayBuffer;
+      file?: File;
     };
 
 const props = defineProps<{
@@ -59,22 +62,25 @@ const handleFileUpload = (event: Event) => {
         type: "xml",
         fileName: file.name,
         data: reader.result as string,
+        file,
       });
       return;
     }
 
     if (isCsv(file)) {
       const buffer = reader.result as ArrayBuffer;
-      let text = new TextDecoder("utf-8").decode(buffer);
+      const utf8Text = new TextDecoder("utf-8").decode(buffer);
+      const win1251Text = new TextDecoder("windows-1251").decode(buffer);
 
-      if (/Ð.|Ñ./.test(text)) {
-        text = new TextDecoder("windows-1251").decode(buffer);
-      }
+      // Mojibake: UTF-8 bytes read as Latin-1 produce Ð, Ñ etc. Prefer Windows-1251 if UTF-8 looks like mojibake.
+      const looksLikeMojibake = /Ð[^\s]|Ñ[^\s]/.test(utf8Text) && !/[а-яА-ЯёЁ]/.test(utf8Text);
+      const text = looksLikeMojibake ? win1251Text : utf8Text;
 
       emit("upload", {
         type: "csv",
         fileName: file.name,
         data: text,
+        file,
       });
       return;
     }
@@ -83,6 +89,7 @@ const handleFileUpload = (event: Event) => {
       type: "array",
       fileName: file.name,
       data: reader.result as ArrayBuffer,
+      file,
     });
   };
 

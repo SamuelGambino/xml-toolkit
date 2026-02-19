@@ -5,7 +5,7 @@ import "handsontable/styles/ht-theme-main.css";
 
 import { HotTable } from "@handsontable/vue3";
 import { registerAllModules } from "handsontable/registry";
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 
 registerAllModules();
 
@@ -37,6 +37,14 @@ watch(
 watch(localData, (newVal) => {
   emit("update", JSON.parse(JSON.stringify(newVal)));
 }, { deep: true });
+
+// Номера строк: 1, 2, 3...
+const rowHeaders = true;
+// Номера колонок: 1, 2, 3...
+const colHeaders = computed(() => {
+  const cols = localData.value[0]?.length ?? 0;
+  return Array.from({ length: cols }, (_, i) => String(i + 1));
+});
 </script>
 
 <template>
@@ -44,8 +52,8 @@ watch(localData, (newVal) => {
     <HotTable
       themeName="ht-theme-main-dark"
       :data="localData"
-      rowHeaders
-      colHeaders
+      :rowHeaders="rowHeaders"
+      :colHeaders="colHeaders"
       stretchH="all"
       search
       manualColumnMove
