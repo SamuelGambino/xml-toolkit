@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { loadTable } from "@/services/convert/tableLoader";
 import { xmlToTable } from "@/services/convert/xmlParser";
 import { tableToXml } from "@/services/convert/xmlBuilder";
+import axios from "axios";
 
 type Table = (string | number | boolean | null)[][];
 
@@ -17,6 +18,14 @@ export interface IConvertStore {
   };
 }
 
+export interface IConfig {
+  supportParams: {
+    value: string;
+    label: string;
+    hint: string;
+  }[];
+}
+
 export const useConvertStore = defineStore("convert", () => {
   const inputFile = ref<IConvertStore>({
     xml: {
@@ -28,6 +37,7 @@ export const useConvertStore = defineStore("convert", () => {
       isConvertRes: null,
     },
   });
+  const actualConfig = ref<IConfig | null>(null);
 
   const uploadTable = (input: string | ArrayBuffer) => {
     inputFile.value.table = {
@@ -67,5 +77,14 @@ export const useConvertStore = defineStore("convert", () => {
     }
   }
 
-  return { inputFile, convertTableToXml, convertXmlToTable, uploadTable, reset };
+  const getConfig = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/api/config/convert");
+      actualConfig.value = response.data;
+    } catch (err) {
+      return new Error(`Ошибка: ${err}`);
+    }
+  }
+
+  return { actualConfig, inputFile, getConfig, convertTableToXml, convertXmlToTable, uploadTable, reset };
 });

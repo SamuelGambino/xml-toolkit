@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 
 import Upload, { type NormalizedFile } from "@/components/Upload/Upload.vue";
@@ -14,7 +14,8 @@ import "./ConvertView.css";
 type TableData = (string | number | boolean | null)[][];
 
 const store = useConvertStore();
-const { inputFile } = storeToRefs(store);
+const { getConfig } = store;
+const { inputFile, actualConfig } = storeToRefs(store);
 
 const uploadedFile = ref<NormalizedFile | null>(null);
 
@@ -89,6 +90,8 @@ const sourceTableData = computed(() => (
 const resultTableData = computed(() => (
   inputFile.value.table.data as TableData | null
 ));
+
+onMounted(getConfig());
 </script>
 
 <template>
@@ -108,6 +111,7 @@ const resultTableData = computed(() => (
       <Button class="convert__button convert__button--convert" :isDisabled="!canConvert" @click="convert">
         Конвертировать
       </Button>
+      
     </div>
 
     <div class="convert__wrapper">
