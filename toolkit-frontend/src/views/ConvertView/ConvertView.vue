@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 
 import Upload, { type NormalizedFile } from "@/components/Upload/Upload.vue";
@@ -8,11 +8,23 @@ import XmlView from "@/components/XmlView/XmlView.vue";
 import ExportButton from "@/components/ExportButton/ExportButton.vue";
 import Button from "@/components/Button/Button.vue";
 import ColumnMapping from "@/components/ColumnMapping/ColumnMapping.vue";
+import DropBox from "@/components/DropBox/DropBox.vue";
 
-import { useConvertStore, getColumnNames } from "@/stores/useConverter";
+import {
+  useConvertStore,
+  getColumnNames,
+  type XmlType,
+} from "@/stores/useConverter";
 import "./ConvertView.css";
 
 type TableData = (string | number | boolean | null)[][];
+
+const XML_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "yandex", label: "Yandex" },
+  { value: "delivery_club", label: "Delivery Club" },
+  { value: "google", label: "Google" },
+  { value: "product_feed", label: "Other product feed" },
+];
 
 const store = useConvertStore();
 const { inputFile, actualConfig } = storeToRefs(store);
@@ -20,21 +32,30 @@ const { inputFile, actualConfig } = storeToRefs(store);
 const uploadedFile = ref<NormalizedFile | null>(null);
 const columnMappings = ref<Record<number, string>>({});
 const convertError = ref<string | null>(null);
+const uploadError = ref<string | null>(null);
 const convertLoading = ref(false);
+const selectedOutputFormat = ref<string>("");
 
 const onUpload = async (file: NormalizedFile) => {
   uploadedFile.value = file;
   columnMappings.value = {};
   convertError.value = null;
+  uploadError.value = null;
   inputFile.value.backendResult = null;
 
   if (file.type === "xml") {
-    inputFile.value.xml.data = file.data;
-    inputFile.value.xml.isConvertRes = false;
+    store.setXmlData(file.data);
+    inputFile.value.table.data = null;
+    inputFile.value.table.isConvertRes = null;
+    selectedOutputFormat.value =
+      actualConfig.value?.supportedOutputFormats?.find((f) => f.value === "table")?.value ?? "";
     return;
   }
 
-  // For CSV files, we need to convert the string back to ArrayBuffer for tableLoader
+  inputFile.value.xml.data = null;
+  inputFile.value.xml.detectedType = null;
+  inputFile.value.xml.selectedType = null;
+
   if (file.type === "csv") {
     const encoder = new TextEncoder();
     const buffer = encoder.encode(file.data);
@@ -42,6 +63,12 @@ const onUpload = async (file: NormalizedFile) => {
   } else {
     store.uploadTable(file.data);
   }
+  selectedOutputFormat.value =
+    actualConfig.value?.supportedOutputFormats?.find((f) => f.value === "xml")?.value ?? "";
+};
+
+const onUploadError = (message: string) => {
+  uploadError.value = message;
 };
 
 const columns = computed(() =>
@@ -52,9 +79,33 @@ const supportedTypes = computed(() =>
   actualConfig.value?.supportedColumnTypes ?? []
 );
 
-const canConvert = computed(() =>
-  Boolean(inputFile.value.table.data || inputFile.value.xml.data)
-);
+/** "Convert to" options: exclude current source format (table → exclude table, xml → exclude xml) */
+const convertToOptions = computed(() => {
+  const formats = actualConfig.value?.supportedOutputFormats ?? [];
+  if (hasXml.value) return formats.filter((f) => f.value !== "xml");
+  if (hasTable.value) return formats.filter((f) => f.value !== "table");
+  return formats;
+});
+
+const hasTable = computed(() => Boolean(inputFile.value.table.data));
+const hasXml = computed(() => Boolean(inputFile.value.xml.data));
+
+/** All columns have a mapping selected (required to enable Convert when table is loaded) */
+const allColumnsMapped = computed(() => {
+  const cols = columns.value;
+  if (cols.length === 0) return true;
+  return cols.every((col) => {
+    const v = columnMappings.value[col.index];
+    return v != null && String(v).trim() !== "";
+  });
+});
+
+const canConvert = computed(() => {
+  if (!hasTable.value && !hasXml.value) return false;
+  if (hasXml.value && !inputFile.value.xml.selectedType) return false;
+  if (hasTable.value && !allColumnsMapped.value) return false;
+  return true;
+});
 
 const mappingsForBackend = computed(() => {
   const arr: { columnIndex: number; columnName: string; columnType: string }[] = [];
@@ -72,7 +123,8 @@ const canConvertViaBackend = computed(
         uploadedFile.value &&
         "file" in uploadedFile.value &&
         uploadedFile.value.file &&
-        mappingsForBackend.value.length > 0
+        allColumnsMapped.value &&
+        mappingsForBackend.value.length === columns.value.length
     )
 );
 
@@ -167,17 +219,40 @@ const resultTableData = computed(() => (
 onMounted(() => {
   store.getConfig();
 });
+
+watch(convertToOptions, (opts) => {
+  if (opts.length === 1 && selectedOutputFormat.value !== opts[0].value) {
+    selectedOutputFormat.value = opts[0].value;
+  }
+}, { immediate: true });
 </script>
 
 <template>
   <section class="convert">
     <div class="convert__wrapper">
-      <Upload @upload="onUpload" :fileName="uploadedFile?.fileName" />
+      <Upload
+        @upload="onUpload"
+        @error="onUploadError"
+        :fileName="uploadedFile?.fileName"
+        :maxSize="20"
+      />
+
+      <p v-if="uploadError" class="convert__error">{{ uploadError }}</p>
 
       <Table v-if="showSourceTable" :data="sourceTableData" v-on:update="(value) => inputFile.table.data = value" />
 
       <XmlView v-if="showSourceXml" :inputXml="inputFile.xml.data ?? ''"
         v-on:update="(value) => inputFile.xml.data = value" />
+
+      <div v-if="showSourceXml" class="convert__options">
+        <label class="convert__label">Тип XML</label>
+        <DropBox
+          class="convert__drop-box"
+          :options="[{ value: '', label: 'Тип не определён' }, ...XML_TYPE_OPTIONS]"
+          :modelValue="(inputFile.xml.selectedType ?? '')"
+          @update:modelValue="(v: string) => store.setXmlSelectedType((v || null) as XmlType)"
+        />
+      </div>
 
       <ExportButton class="convert__button" v-if="exportSourceFile" type="upload" :file="exportSourceFile" />
     </div>
@@ -191,6 +266,16 @@ onMounted(() => {
       >
         Конвертировать
       </Button>
+
+      <div v-if="(showSourceTable || showSourceXml) && convertToOptions.length > 0" class="convert__options">
+        <label class="convert__label">Конвертировать в</label>
+        <DropBox
+          class="convert__drop-box"
+          :options="convertToOptions"
+          v-model="selectedOutputFormat"
+        />
+      </div>
+
       <ColumnMapping
         v-if="showSourceTable && columns.length > 0 && supportedTypes.length > 0"
         :columns="columns"

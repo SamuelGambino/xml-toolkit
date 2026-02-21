@@ -22,13 +22,19 @@ export type NormalizedFile =
       file?: File;
     };
 
-const props = defineProps<{
-  only?: "xml" | "table";
-  fileName?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    only?: "xml" | "table";
+    fileName?: string;
+    /** Max file size in megabytes (e.g. 20 for 20MB). No limit if not set. */
+    maxSize?: number;
+  }>(),
+  { maxSize: undefined }
+);
 
 const emit = defineEmits<{
   (e: "upload", file: NormalizedFile): void;
+  (e: "error", message: string): void;
 }>();
 
 const accept = computed(() => {
@@ -49,7 +55,16 @@ const handleFileUpload = (event: Event) => {
   if (!input.files?.length) return;
 
   const file = input.files[0];
-  if(!file) return;
+  if (!file) return;
+
+  if (props.maxSize != null && props.maxSize > 0) {
+    const maxBytes = props.maxSize * 1024 * 1024;
+    if (file.size > maxBytes) {
+      emit("error", `Файл превышает допустимый размер (макс. ${props.maxSize} МБ)`);
+      input.value = "";
+      return;
+    }
+  }
 
   const reader = new FileReader();
 

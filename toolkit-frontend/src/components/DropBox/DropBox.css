@@ -1,0 +1,11 @@
+.drop-box {
+  flex: 1;
+  max-width: 240px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  border: 1px solid hsla(6, 78%, 57%, 0.5);
+  border-radius: 4px;
+  background: var(--color-background);
+  color: inherit;
+  cursor: pointer;
+}

@@ -11,7 +11,6 @@ export interface Modifier {
 export interface ModifierGroup {
   id: string;
   name: string;
-  type?: string;
   maxSelect?: number;
   minSelect?: number;
   modifiers: Modifier[];
@@ -21,12 +20,21 @@ export interface Category {
   id: string;
   name: string;
   parentId?: string;
+  products: Product[];
 }
 
 export interface ProductParameter {
   id: string;
   weight: number;
+  weightUnit?: string;
+  proteins?: number;
+  fats?: number;
+  carbohydrates?: number;
+  calories?: number;
+  energyValue?: number;
   price: number;
+  oldPrice?: number;
+  priceUnit?: string;
 }
 
 export interface Product {
@@ -41,5 +49,4 @@ export interface Product {
 export interface UniversalProductData {
   modifierGroups: ModifierGroup[];
   categories: Category[];
-  products: Product[];
 }
