@@ -12,6 +12,7 @@ export const createShopPayload = (data: UniversalProductData) => {
   const offers = data.categories.flatMap((category) =>
     category.products.map((product) => ({
       $: { id: product.id, available: 'true' },
+      url: product.link ?? '',
       name: product.name,
       description: product.description ?? '',
       picture: product.image ?? '',

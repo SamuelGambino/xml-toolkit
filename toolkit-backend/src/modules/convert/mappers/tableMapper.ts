@@ -19,13 +19,15 @@ interface TableRow {
 
 interface ParsingState {
   currentCategory: { id: string; name: string } | null;
+  currentSubcategory: { id: string; name: string; parentId: string } | null;
   currentProduct: { id: string; name: string } | null;
   currentModifierGroup: { id: string; name: string } | null;
 }
 
 interface RowTypeData {
   category?: { id?: string; name: string; parentId?: string };
-  product?: { id?: string; name: string; description?: string; image?: string };
+  subcategory?: { id?: string; name: string };
+  product?: { id?: string; name: string; description?: string; image?: string; link?: string };
   parameter?: ProductParameter;
   modifierGroup?: {
     id?: string;
@@ -46,6 +48,7 @@ export class TableMapper {
 
     const state: ParsingState = {
       currentCategory: null,
+      currentSubcategory: null,
       currentProduct: null,
       currentModifierGroup: null,
     };
@@ -55,6 +58,10 @@ export class TableMapper {
 
       if (rowData.category) {
         this.handleCategory(rowData.category, result, state);
+      }
+
+      if (rowData.subcategory) {
+        this.handleSubcategory(rowData.subcategory, row, mappings, result, state);
       }
 
       if (rowData.product) {
@@ -81,6 +88,8 @@ export class TableMapper {
     const categoryName = this.getValueByType(row, mappings, ColumnType.CATEGORY_NAME);
     const categoryId = this.getValueByType(row, mappings, ColumnType.CATEGORY_ID);
     const categoryParent = this.getValueByType(row, mappings, ColumnType.CATEGORY_PARENT);
+    const subcategoryName = this.getValueByType(row, mappings, ColumnType.SUBCATEGORY_NAME);
+    const subcategoryId = this.getValueByType(row, mappings, ColumnType.SUBCATEGORY_ID);
 
     const productName = this.getValueByType(row, mappings, ColumnType.PRODUCT_NAME);
     const productId = this.getValueByType(row, mappings, ColumnType.PRODUCT_ID);
@@ -103,12 +112,20 @@ export class TableMapper {
       };
     }
 
+    if (subcategoryName) {
+      rowData.subcategory = {
+        id: subcategoryId,
+        name: subcategoryName,
+      };
+    }
+
     if (productName) {
       rowData.product = {
         id: productId,
         name: productName,
         description: this.getValueByType(row, mappings, ColumnType.PRODUCT_DESCRIPTION),
         image: this.getValueByType(row, mappings, ColumnType.PRODUCT_IMAGE),
+        link: this.getValueByType(row, mappings, ColumnType.PRODUCT_LINK),
       };
     }
 
@@ -147,14 +164,13 @@ export class TableMapper {
     result: UniversalProductData,
     state: ParsingState
   ): void {
-    if (state.currentCategory && state.currentCategory.name === data.name) {
-      return;
-    }
-
-    const existing = result.categories.find((category) => category.name === data.name);
+    const existing = result.categories.find(
+      (category) => category.name === data.name && !category.parentId
+    );
 
     if (existing) {
       state.currentCategory = { id: existing.id, name: existing.name };
+      state.currentSubcategory = null;
       state.currentProduct = null;
       state.currentModifierGroup = null;
       return;
@@ -169,12 +185,15 @@ export class TableMapper {
 
     result.categories.push(category);
     state.currentCategory = { id: category.id, name: category.name };
+    state.currentSubcategory = null;
     state.currentProduct = null;
     state.currentModifierGroup = null;
   }
 
-  private static handleProduct(
-    data: { id?: string; name: string; description?: string; image?: string },
+  private static handleSubcategory(
+    data: { id?: string; name: string },
+    row: TableRow,
+    mappings: ColumnMapping[],
     result: UniversalProductData,
     state: ParsingState
   ): void {
@@ -182,11 +201,66 @@ export class TableMapper {
       return;
     }
 
+    const explicitSubcategoryId = data.id;
+    const categoryIdValue = this.getValueByType(row, mappings, ColumnType.CATEGORY_ID);
+    const baseId = explicitSubcategoryId || categoryIdValue || generateId('subcat');
+
+    let resolvedId = baseId;
+    if (resolvedId === state.currentCategory.id) {
+      const previousIndex =
+        state.currentSubcategory && state.currentSubcategory.id.startsWith(`${baseId}_`)
+          ? Number(state.currentSubcategory.id.split('_').pop()) || 0
+          : 0;
+      resolvedId = `${baseId}_${previousIndex + 1}`;
+    }
+
+    const existing = result.categories.find(
+      (category) => category.name === data.name && category.parentId === state.currentCategory?.id
+    );
+
+    if (existing) {
+      state.currentSubcategory = {
+        id: existing.id,
+        name: existing.name,
+        parentId: state.currentCategory.id,
+      };
+      state.currentProduct = null;
+      state.currentModifierGroup = null;
+      return;
+    }
+
+    const subcategory: Category = {
+      id: resolvedId,
+      name: data.name,
+      parentId: state.currentCategory.id,
+      products: [],
+    };
+
+    result.categories.push(subcategory);
+    state.currentSubcategory = {
+      id: subcategory.id,
+      name: subcategory.name,
+      parentId: state.currentCategory.id,
+    };
+    state.currentProduct = null;
+    state.currentModifierGroup = null;
+  }
+
+  private static handleProduct(
+    data: { id?: string; name: string; description?: string; image?: string; link?: string },
+    result: UniversalProductData,
+    state: ParsingState
+  ): void {
+    const targetCategoryId = state.currentSubcategory?.id || state.currentCategory?.id;
+    if (!targetCategoryId) {
+      return;
+    }
+
     if (state.currentProduct && state.currentProduct.name === data.name) {
       return;
     }
 
-    const category = result.categories.find((item) => item.id === state.currentCategory?.id);
+    const category = result.categories.find((item) => item.id === targetCategoryId);
     if (!category) {
       return;
     }
@@ -204,6 +278,7 @@ export class TableMapper {
       name: data.name,
       description: data.description,
       image: data.image,
+      link: data.link,
       modifers: [],
       parameters: [],
     };
@@ -298,7 +373,7 @@ export class TableMapper {
     row: TableRow,
     mappings: ColumnMapping[]
   ): ProductParameter | undefined {
-    const id = this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_ID);
+    const id = this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_ID) || generateId('param');
     const weight = this.parseNumber(
       this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_WEIGHT)
     );
@@ -306,7 +381,7 @@ export class TableMapper {
       this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_PRICE)
     );
 
-    if (!id || weight === null || price === null) {
+    if (weight === null || price === null) {
       return undefined;
     }
 
