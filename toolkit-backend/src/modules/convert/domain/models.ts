@@ -11,6 +11,7 @@ export interface Modifier {
 export interface ModifierGroup {
   id: string;
   name: string;
+  type?: string;
   maxSelect?: number;
   minSelect?: number;
   modifiers: Modifier[];

@@ -7,17 +7,13 @@ import { UniversalProductData } from './domain/models';
 import { ColumnMapping, ColumnType } from './convert.dto';
 import { FileParserFactory } from './parsers/fileParser';
 import { TableMapper } from './mappers/tableMapper';
+import { OutputBuilders, TargetType } from './builders/outputBuilders';
+import { UniversalXmlParser, XmlSourceType } from './parsers/universalXmlParser';
+
+export type SourceType = 'table' | XmlSourceType;
 
 export class ConvertService {
-  /**
-   * Convert file stream to universal product data format
-   * Supports streaming for large files (>500MB)
-   * 
-   * Note: For very large files, rows are processed incrementally
-   * to minimize memory usage. The mapper builds relationships
-   * incrementally as rows are processed.
-   */
-  async convertFile(
+  async parseTableToUniversal(
     fileStream: Readable,
     mimeType: string,
     filename: string,
@@ -26,41 +22,63 @@ export class ConvertService {
     const parser = FileParserFactory.createParser(mimeType, filename);
     const rows: Array<{ [columnIndex: number]: string | number }> = [];
 
-    // Stream processing - collect rows as they come
-    // For files >500MB, this approach minimizes memory spikes
-    // by processing in chunks rather than loading entire file
     await parser.parse(fileStream, (row) => {
       rows.push(row);
-      
-      // For very large datasets, we could process in batches here
-      // For now, we collect all rows and process at once
-      // This is acceptable as the mapper needs all data to build relationships
     });
 
-    // Map rows to universal format
-    const result = TableMapper.mapToUniversalFormat(rows, mappings);
-    return result;
+    return TableMapper.mapToUniversalFormat(rows, mappings);
   }
 
-  /**
-   * Validate column mappings
-   */
+  async parseXmlToUniversal(xml: string, sourceType: XmlSourceType): Promise<UniversalProductData> {
+    return UniversalXmlParser.parse(xml, sourceType);
+  }
+
+  buildOutput(data: UniversalProductData, targetType: TargetType) {
+    return OutputBuilders.build(data, targetType);
+  }
+
+  async convertByConfig(params: {
+    fileBuffer: Buffer;
+    mimeType: string;
+    filename: string;
+    sourceType: SourceType;
+    targetType: TargetType;
+    mappings?: ColumnMapping[];
+  }) {
+    const { fileBuffer, mimeType, filename, sourceType, targetType, mappings = [] } = params;
+
+    let universal: UniversalProductData;
+
+    if (sourceType === 'table') {
+      const validation = this.validateMappings(mappings);
+      if (!validation.valid) {
+        throw new Error(validation.error);
+      }
+
+      const stream = new Readable();
+      stream.push(fileBuffer);
+      stream.push(null);
+      universal = await this.parseTableToUniversal(stream, mimeType, filename, mappings);
+    } else {
+      const xml = fileBuffer.toString('utf-8');
+      universal = await this.parseXmlToUniversal(xml, sourceType);
+    }
+
+    return this.buildOutput(universal, targetType);
+  }
+
   validateMappings(mappings: ColumnMapping[]): { valid: boolean; error?: string } {
     if (!mappings || mappings.length === 0) {
       return { valid: false, error: 'No column mappings provided' };
     }
 
-    // Check for duplicate column indices
     const indices = mappings.map((m) => m.columnIndex);
     const uniqueIndices = new Set(indices);
     if (indices.length !== uniqueIndices.size) {
       return { valid: false, error: 'Duplicate column indices found' };
     }
 
-    // Check for required mappings (at least one product-related mapping)
-    const hasProductMapping = mappings.some(
-      (m) => m.columnType === ColumnType.PRODUCT_NAME || m.columnType === ColumnType.PRODUCT
-    );
+    const hasProductMapping = mappings.some((m) => m.columnType === ColumnType.PRODUCT_NAME);
 
     if (!hasProductMapping) {
       return {

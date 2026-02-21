@@ -33,7 +33,7 @@ export class TableMapper {
     // Process each row
     for (const row of rows) {
       // Extract values based on mappings
-      const categoryName = this.getValueByType(row, mappings, ColumnType.CATEGORY);
+      const categoryName = this.getValueByType(row, mappings, ColumnType.CATEGORY_NAME);
       const productName = this.getValueByType(row, mappings, ColumnType.PRODUCT_NAME);
       const modifierGroupName = this.getValueByType(
         row,

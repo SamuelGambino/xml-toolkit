@@ -4,13 +4,13 @@
 
 import { Readable } from 'stream';
 import { FileParser, TableRow } from './fileParser';
-import * as csv from 'csv-parser';
+import csv from 'csv-parser';
 
 export class CsvParser implements FileParser {
   async parse(stream: Readable, onRow: (row: TableRow) => void): Promise<void> {
     return new Promise((resolve, reject) => {
       stream
-        .pipe(csv({ headers: false, skipEmptyLines: true }))
+        .pipe(csv({ headers: false }))
         .on('data', (data: any) => {
           const tableRow: TableRow = {};
           Object.values(data).forEach((value: any, index: number) => {
@@ -26,7 +26,7 @@ export class CsvParser implements FileParser {
         .on('end', () => {
           resolve();
         })
-        .on('error', (error) => {
+        .on('error', (error: Error) => {
           reject(error);
         });
     });
