@@ -10,11 +10,11 @@ export class GoogleFeedBuilder {
           'g:id': product.id,
           'g:title': product.name,
           'g:description': product.description ?? '',
-          'g:link': '',
+          'g:link': product.link ?? '',
           'g:image_link': product.image ?? '',
           'g:price': `${param?.price ?? 0} ${param?.priceUnit ?? 'RUB'}`,
-          'g:availability': 'in stock',
-          'g:google_product_category': category.name,
+          'g:availability': 'in_stock',
+          'g:product_type': this.buildProductType(category.id, data),
         };
       })
     );
@@ -37,4 +37,20 @@ export class GoogleFeedBuilder {
     const builder = new xml2js.Builder({ headless: false });
     return builder.buildObject(payload);
   }
+  private static buildProductType(categoryId: string, data: UniversalProductData): string {
+    const byId = new Map(data.categories.map((category) => [category.id, category]));
+    const parts: string[] = [];
+
+    let current = byId.get(categoryId);
+    while (current) {
+      parts.unshift(current.name);
+      if (!current.parentId) {
+        break;
+      }
+      current = byId.get(current.parentId);
+    }
+
+    return parts.join(' > ');
+  }
+
 }

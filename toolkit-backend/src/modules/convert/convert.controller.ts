@@ -11,9 +11,6 @@ import {
   ColumnMapping,
 } from './convert.dto';
 import multer from 'multer';
-import { Readable } from 'stream';
-import * as fs from 'fs';
-import * as path from 'path';
 import { TargetType } from './builders/outputBuilders';
 
 const upload = multer({
@@ -35,11 +32,14 @@ export class ConvertController {
       supportedColumnTypes: [
         { value: ColumnType.CATEGORY_ID, label: 'Category ID', labelRu: 'ID категории', description: 'ID of the category' },
         { value: ColumnType.CATEGORY_NAME, label: 'Category', labelRu: 'Имя категории', description: 'Product category name' },
-        { value: ColumnType.CATEGORY_PARENT, label: 'Category Parent', labelRu: 'Имя подкатегории', description: 'Parent category name (for nested categories)' },
+        { value: ColumnType.CATEGORY_PARENT, label: 'Category Parent', labelRu: 'Родительская категория', description: 'Parent category name (for nested categories)' },
+        { value: ColumnType.SUBCATEGORY_NAME, label: 'Subcategory Name', labelRu: 'Имя подкатегории', description: 'Subcategory name' },
+        { value: ColumnType.SUBCATEGORY_ID, label: 'Subcategory ID', labelRu: 'ID подкатегории', description: 'ID of the subcategory' },
         { value: ColumnType.PRODUCT_ID, label: 'Product ID', labelRu: 'ID товара', description: 'ID of the product' },
         { value: ColumnType.PRODUCT_NAME, label: 'Product Name', labelRu: 'Имя товара', description: 'Name of the product' },
         { value: ColumnType.PRODUCT_DESCRIPTION, label: 'Product Description', labelRu: 'Описание товара', description: 'Description of the product' },
         { value: ColumnType.PRODUCT_IMAGE, label: 'Product Image', labelRu: 'Изображение товара', description: 'URL or path to product image' },
+        { value: ColumnType.PRODUCT_LINK, label: 'Product Link', labelRu: 'Ссылка на товар', description: 'URL to product page' },
         { value: ColumnType.PRODUCT_PARAMETER_ID, label: 'Product Parameter ID', labelRu: 'ID параметра товара', description: 'ID of the product parameter' },
         { value: ColumnType.PRODUCT_PARAMETER_WEIGHT, label: 'Product Weight', labelRu: 'Вес товара', description: 'Weight value for the product parameter' },
         { value: ColumnType.PRODUCT_PARAMETER_WEIGHT_UNIT, label: 'Product Weight Unit', labelRu: 'Ед.Изм. веса', description: 'Unit of measurement for the product weight' },
@@ -102,34 +102,18 @@ export class ConvertController {
         return;
       }
 
-      const validation = this.convertService.validateMappings(mappings);
-      if (!validation.valid) {
-        res.status(400).json({ success: false, error: validation.error } as ConvertResponseDto);
-        return;
-      }
+      const built = await this.convertService.convertByConfig({
+        fileBuffer: file.buffer,
+        mimeType: file.mimetype,
+        filename: file.originalname,
+        sourceType,
+        targetType: 'yml',
+        mappings,
+      });
 
-      const fileStream = new Readable();
-      fileStream.push(file.buffer);
-      fileStream.push(null);
-
-      const result = await this.convertService.parseTableToUniversal(
-        fileStream,
-        file.mimetype,
-        file.originalname,
-        mappings
-      );
-
-      try {
-        const debugDir = path.join(process.cwd(), 'debug-output');
-        if (!fs.existsSync(debugDir)) fs.mkdirSync(debugDir, { recursive: true });
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const fileName = `converted_${path.parse(file.originalname).name}_${timestamp}.json`;
-        fs.writeFileSync(path.join(debugDir, fileName), JSON.stringify(result, null, 2), 'utf-8');
-      } catch (saveError: any) {
-        console.error('Failed to save debug file:', saveError.message);
-      }
-
-      res.json({ success: true, data: result } as ConvertResponseDto);
+      res.setHeader('Content-Type', built.mimeType);
+      res.setHeader('Content-Disposition', `attachment; filename="${built.filename}"`);
+      res.send(built.content);
     } catch (error: any) {
       console.error('Convert error:', error);
       res.status(500).json({ success: false, error: error.message || 'Internal server error' } as ConvertResponseDto);
