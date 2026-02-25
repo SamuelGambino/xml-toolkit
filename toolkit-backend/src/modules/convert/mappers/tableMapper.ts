@@ -3,9 +3,9 @@
  */
 
 import {
+  Category,
   Modifier,
   ModifierGroup,
-  Category,
   Product,
   ProductParameter,
   UniversalProductData,
@@ -17,86 +17,400 @@ interface TableRow {
   [columnIndex: number]: string | number;
 }
 
+interface ParsingState {
+  currentCategory: { id: string; name: string } | null;
+  currentSubcategory: { id: string; name: string; parentId: string } | null;
+  currentProduct: { id: string; name: string } | null;
+  currentModifierGroup: { id: string; name: string } | null;
+}
+
+interface RowTypeData {
+  category?: { id?: string; name: string; parentId?: string };
+  subcategory?: { id?: string; name: string };
+  product?: { id?: string; name: string; description?: string; image?: string; link?: string };
+  parameter?: ProductParameter;
+  modifierGroup?: {
+    id?: string;
+    name: string;
+    type?: string;
+    maxSelect?: number;
+    minSelect?: number;
+  };
+  modifier?: { id?: string; name: string; price: number };
+}
+
 export class TableMapper {
-  /**
-   * Maps table rows to universal product data format
-   */
-  static mapToUniversalFormat(
-    rows: TableRow[],
+  static mapToUniversalFormat(rows: TableRow[], mappings: ColumnMapping[]): UniversalProductData {
+    const result: UniversalProductData = {
+      categories: [],
+      modifierGroups: [],
+    };
+
+    const state: ParsingState = {
+      currentCategory: null,
+      currentSubcategory: null,
+      currentProduct: null,
+      currentModifierGroup: null,
+    };
+
+    rows.slice(1).forEach((row) => {
+      const rowData = this.collectRowTypeData(row, mappings);
+
+      if (rowData.category) {
+        this.handleCategory(rowData.category, result, state);
+      }
+
+      if (rowData.subcategory) {
+        this.handleSubcategory(rowData.subcategory, row, mappings, result, state);
+      }
+
+      if (rowData.product) {
+        this.handleProduct(rowData.product, result, state);
+      }
+
+      if (rowData.parameter) {
+        this.handleProductParameter(rowData.parameter, result, state);
+      }
+
+      if (rowData.modifierGroup) {
+        this.handleModifierGroup(rowData.modifierGroup, result, state);
+      }
+
+      if (rowData.modifier) {
+        this.handleModifier(rowData.modifier, result, state);
+      }
+    });
+
+    return result;
+  }
+
+  private static collectRowTypeData(row: TableRow, mappings: ColumnMapping[]): RowTypeData {
+    const categoryName = this.getValueByType(row, mappings, ColumnType.CATEGORY_NAME);
+    const categoryId = this.getValueByType(row, mappings, ColumnType.CATEGORY_ID);
+    const categoryParent = this.getValueByType(row, mappings, ColumnType.CATEGORY_PARENT);
+    const subcategoryName = this.getValueByType(row, mappings, ColumnType.SUBCATEGORY_NAME);
+    const subcategoryId = this.getValueByType(row, mappings, ColumnType.SUBCATEGORY_ID);
+
+    const productName = this.getValueByType(row, mappings, ColumnType.PRODUCT_NAME);
+    const productId = this.getValueByType(row, mappings, ColumnType.PRODUCT_ID);
+
+    const modifierGroupName = this.getValueByType(row, mappings, ColumnType.MODIFIER_GROUP_NAME);
+    const modifierGroupId = this.getValueByType(row, mappings, ColumnType.MODIFIER_GROUP_ID);
+
+    const modifierName = this.getValueByType(row, mappings, ColumnType.MODIFIER_NAME);
+    const modifierId = this.getValueByType(row, mappings, ColumnType.MODIFIER_ID);
+
+    const parameter = this.collectParameter(row, mappings);
+
+    const rowData: RowTypeData = {};
+
+    if (categoryName) {
+      rowData.category = {
+        id: categoryId,
+        name: categoryName,
+        parentId: categoryParent,
+      };
+    }
+
+    if (subcategoryName) {
+      rowData.subcategory = {
+        id: subcategoryId,
+        name: subcategoryName,
+      };
+    }
+
+    if (productName) {
+      rowData.product = {
+        id: productId,
+        name: productName,
+        description: this.getValueByType(row, mappings, ColumnType.PRODUCT_DESCRIPTION),
+        image: this.getValueByType(row, mappings, ColumnType.PRODUCT_IMAGE),
+        link: this.getValueByType(row, mappings, ColumnType.PRODUCT_LINK),
+      };
+    }
+
+    if (parameter) {
+      rowData.parameter = parameter;
+    }
+
+    if (modifierGroupName) {
+      rowData.modifierGroup = {
+        id: modifierGroupId,
+        name: modifierGroupName,
+        type: this.getValueByType(row, mappings, ColumnType.MODIFIER_GROUP_TYPE),
+        maxSelect: this.parseIntOrUndefined(
+          this.getValueByType(row, mappings, ColumnType.MODIFIER_GROUP_MAX_SELECT)
+        ),
+        minSelect: this.parseIntOrUndefined(
+          this.getValueByType(row, mappings, ColumnType.MODIFIER_GROUP_MIN_SELECT)
+        ),
+      };
+    }
+
+    if (modifierName) {
+      rowData.modifier = {
+        id: modifierId,
+        name: modifierName,
+        price:
+          this.parseNumber(this.getValueByType(row, mappings, ColumnType.MODIFIER_PRICE)) ?? 0,
+      };
+    }
+
+    return rowData;
+  }
+
+  private static handleCategory(
+    data: { id?: string; name: string; parentId?: string },
+    result: UniversalProductData,
+    state: ParsingState
+  ): void {
+    const existing = result.categories.find(
+      (category) => category.name === data.name && !category.parentId
+    );
+
+    if (existing) {
+      state.currentCategory = { id: existing.id, name: existing.name };
+      state.currentSubcategory = null;
+      state.currentProduct = null;
+      state.currentModifierGroup = null;
+      return;
+    }
+
+    const category: Category = {
+      id: data.id || generateId('cat'),
+      name: data.name,
+      parentId: data.parentId,
+      products: [],
+    };
+
+    result.categories.push(category);
+    state.currentCategory = { id: category.id, name: category.name };
+    state.currentSubcategory = null;
+    state.currentProduct = null;
+    state.currentModifierGroup = null;
+  }
+
+  private static handleSubcategory(
+    data: { id?: string; name: string },
+    row: TableRow,
+    mappings: ColumnMapping[],
+    result: UniversalProductData,
+    state: ParsingState
+  ): void {
+    if (!state.currentCategory) {
+      return;
+    }
+
+    const explicitSubcategoryId = data.id;
+    const categoryIdValue = this.getValueByType(row, mappings, ColumnType.CATEGORY_ID);
+    const baseId = explicitSubcategoryId || categoryIdValue || generateId('subcat');
+
+    let resolvedId = baseId;
+    if (resolvedId === state.currentCategory.id) {
+      const previousIndex =
+        state.currentSubcategory && state.currentSubcategory.id.startsWith(`${baseId}_`)
+          ? Number(state.currentSubcategory.id.split('_').pop()) || 0
+          : 0;
+      resolvedId = `${baseId}_${previousIndex + 1}`;
+    }
+
+    const existing = result.categories.find(
+      (category) => category.name === data.name && category.parentId === state.currentCategory?.id
+    );
+
+    if (existing) {
+      state.currentSubcategory = {
+        id: existing.id,
+        name: existing.name,
+        parentId: state.currentCategory.id,
+      };
+      state.currentProduct = null;
+      state.currentModifierGroup = null;
+      return;
+    }
+
+    const subcategory: Category = {
+      id: resolvedId,
+      name: data.name,
+      parentId: state.currentCategory.id,
+      products: [],
+    };
+
+    result.categories.push(subcategory);
+    state.currentSubcategory = {
+      id: subcategory.id,
+      name: subcategory.name,
+      parentId: state.currentCategory.id,
+    };
+    state.currentProduct = null;
+    state.currentModifierGroup = null;
+  }
+
+  private static handleProduct(
+    data: { id?: string; name: string; description?: string; image?: string; link?: string },
+    result: UniversalProductData,
+    state: ParsingState
+  ): void {
+    const targetCategoryId = state.currentSubcategory?.id || state.currentCategory?.id;
+    if (!targetCategoryId) {
+      return;
+    }
+
+    if (state.currentProduct && state.currentProduct.name === data.name) {
+      return;
+    }
+
+    const category = result.categories.find((item) => item.id === targetCategoryId);
+    if (!category) {
+      return;
+    }
+
+    const existing = category.products.find((item) => item.name === data.name);
+
+    if (existing) {
+      state.currentProduct = { id: existing.id, name: existing.name };
+      state.currentModifierGroup = null;
+      return;
+    }
+
+    const product: Product = {
+      id: data.id || generateId('prod'),
+      name: data.name,
+      description: data.description,
+      image: data.image,
+      link: data.link,
+      modifers: [],
+      parameters: [],
+    };
+
+    category.products.push(product);
+    state.currentProduct = { id: product.id, name: product.name };
+    state.currentModifierGroup = null;
+  }
+
+  private static handleProductParameter(
+    parameter: ProductParameter,
+    result: UniversalProductData,
+    state: ParsingState
+  ): void {
+    if (!state.currentProduct) {
+      return;
+    }
+
+    const product = this.findProductById(result, state.currentProduct.id);
+    if (!product) {
+      return;
+    }
+
+    product.parameters.push(parameter);
+  }
+
+  private static handleModifierGroup(
+    data: { id?: string; name: string; type?: string; maxSelect?: number; minSelect?: number },
+    result: UniversalProductData,
+    state: ParsingState
+  ): void {
+    if (!state.currentProduct) {
+      return;
+    }
+
+    if (state.currentModifierGroup && state.currentModifierGroup.name === data.name) {
+      return;
+    }
+
+    const existing = result.modifierGroups.find((item) => item.name === data.name);
+
+    const group: ModifierGroup = existing || {
+      id: data.id || generateId('mg'),
+      name: data.name,
+      type: data.type,
+      maxSelect: data.maxSelect,
+      minSelect: data.minSelect,
+      modifiers: [],
+    };
+
+    if (!existing) {
+      result.modifierGroups.push(group);
+    }
+
+    const product = this.findProductById(result, state.currentProduct.id);
+    if (product && !product.modifers.includes(group.id)) {
+      product.modifers.push(group.id);
+    }
+
+    state.currentModifierGroup = { id: group.id, name: group.name };
+  }
+
+  private static handleModifier(
+    data: { id?: string; name: string; price: number },
+    result: UniversalProductData,
+    state: ParsingState
+  ): void {
+    if (!state.currentModifierGroup) {
+      return;
+    }
+
+    const group = result.modifierGroups.find((item) => item.id === state.currentModifierGroup?.id);
+    if (!group) {
+      return;
+    }
+
+    const existing = group.modifiers.find((item) => item.name === data.name);
+    if (existing) {
+      return;
+    }
+
+    const modifier: Modifier = {
+      id: data.id || generateId('mod'),
+      name: data.name,
+      price: data.price,
+    };
+
+    group.modifiers.push(modifier);
+  }
+
+  private static collectParameter(
+    row: TableRow,
     mappings: ColumnMapping[]
-  ): UniversalProductData {
-    const modifierGroupsMap = new Map<string, ModifierGroup>();
-    const categoriesMap = new Map<string, Category>();
-    const categoryNameToIdMap = new Map<string, string>();
-    const modifierGroupNameToIdMap = new Map<string, string>();
+  ): ProductParameter | undefined {
+    const id = this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_ID) || generateId('param');
+    const weight = this.parseNumber(
+      this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_WEIGHT)
+    );
+    const price = this.parseNumber(
+      this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_PRICE)
+    );
 
-    // Process each row
-    for (const row of rows) {
-      // Extract values based on mappings
-      const categoryName = this.getValueByType(row, mappings, ColumnType.CATEGORY_NAME);
-      const productName = this.getValueByType(row, mappings, ColumnType.PRODUCT_NAME);
-      const modifierGroupName = this.getValueByType(
-        row,
-        mappings,
-        ColumnType.MODIFIER_GROUP_NAME
-      );
-      const modifierName = this.getValueByType(row, mappings, ColumnType.MODIFIER_NAME);
-
-      // Process category (with empty products array)
-      if (categoryName) {
-        this.getOrCreateCategory(
-          categoryName,
-          categoriesMap,
-          categoryNameToIdMap,
-          row,
-          mappings
-        );
-      }
-
-      // Process modifier group
-      if (modifierGroupName) {
-        const modifierGroupId = this.getOrCreateModifierGroup(
-          modifierGroupName,
-          modifierGroupsMap,
-          modifierGroupNameToIdMap,
-          row,
-          mappings
-        );
-
-        // Process modifier if present
-        if (modifierName) {
-          this.addModifierToGroup(
-            modifierGroupId,
-            modifierGroupsMap,
-            row,
-            mappings
-          );
-        }
-      }
-
-      // Process product and add to category
-      if (productName) {
-        const product = this.createProduct(row, mappings, modifierGroupNameToIdMap);
-        if (product) {
-          const targetCategoryName = categoryName || 'Без категории';
-          const categoryId = this.getOrCreateCategory(
-            targetCategoryName,
-            categoriesMap,
-            categoryNameToIdMap,
-            row,
-            mappings
-          );
-          const category = categoriesMap.get(categoryId);
-          if (category) {
-            category.products.push(product);
-          }
-        }
-      }
+    if (weight === null || price === null) {
+      return undefined;
     }
 
     return {
-      modifierGroups: Array.from(modifierGroupsMap.values()),
-      categories: Array.from(categoriesMap.values()),
+      id,
+      weight,
+      weightUnit: this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_WEIGHT_UNIT),
+      price,
+      oldPrice: this.parseNumber(
+        this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_OLD_PRICE)
+      ) ?? undefined,
+      priceUnit: this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_PRICE_UNIT),
+      proteins:
+        this.parseNumber(this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_PROTEINS)) ??
+        undefined,
+      fats:
+        this.parseNumber(this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_FATS)) ??
+        undefined,
+      carbohydrates:
+        this.parseNumber(
+          this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_CARBOHYDRATES)
+        ) ?? undefined,
+      calories:
+        this.parseNumber(this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_CALORIES)) ??
+        undefined,
+      energyValue:
+        this.parseNumber(
+          this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_ENERGY_VALUE)
+        ) ?? undefined,
     };
   }
 
@@ -105,151 +419,46 @@ export class TableMapper {
     mappings: ColumnMapping[],
     type: ColumnType
   ): string | undefined {
-    const mapping = mappings.find((m) => m.columnType === type);
-    if (!mapping) return undefined;
+    const mapping = mappings.find((item) => item.columnType === type);
+    if (!mapping) {
+      return undefined;
+    }
+
     const value = row[mapping.columnIndex];
-    return value !== undefined && value !== null ? String(value).trim() : undefined;
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+
+    const normalized = String(value).trim();
+    return normalized || undefined;
   }
 
-  private static getOrCreateCategory(
-    categoryName: string,
-    categoriesMap: Map<string, Category>,
-    categoryNameToIdMap: Map<string, string>,
-    row: TableRow,
-    mappings: ColumnMapping[]
-  ): string {
-    if (categoryNameToIdMap.has(categoryName)) {
-      return categoryNameToIdMap.get(categoryName)!;
+  private static parseNumber(value: string | undefined): number | null {
+    if (!value) {
+      return null;
     }
 
-    const categoryId = generateId('cat');
-    const parentCategoryName = this.getValueByType(row, mappings, ColumnType.CATEGORY_PARENT);
-    let parentId: string | undefined;
-
-    if (parentCategoryName && categoryNameToIdMap.has(parentCategoryName)) {
-      parentId = categoryNameToIdMap.get(parentCategoryName);
-    }
-
-    const category: Category = {
-      id: categoryId,
-      name: categoryName,
-      parentId,
-      products: [],
-    };
-
-    categoriesMap.set(categoryId, category);
-    categoryNameToIdMap.set(categoryName, categoryId);
-    return categoryId;
+    const parsed = Number(value.replace(',', '.'));
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
-  private static getOrCreateModifierGroup(
-    modifierGroupName: string,
-    modifierGroupsMap: Map<string, ModifierGroup>,
-    modifierGroupNameToIdMap: Map<string, string>,
-    row: TableRow,
-    mappings: ColumnMapping[]
-  ): string {
-    if (modifierGroupNameToIdMap.has(modifierGroupName)) {
-      return modifierGroupNameToIdMap.get(modifierGroupName)!;
+  private static parseIntOrUndefined(value: string | undefined): number | undefined {
+    if (!value) {
+      return undefined;
     }
 
-    const modifierGroupId = generateId('mg');
-    const type = this.getValueByType(row, mappings, ColumnType.MODIFIER_GROUP_TYPE);
-    const maxSelectStr = this.getValueByType(
-      row,
-      mappings,
-      ColumnType.MODIFIER_GROUP_MAX_SELECT
-    );
-    const minSelectStr = this.getValueByType(
-      row,
-      mappings,
-      ColumnType.MODIFIER_GROUP_MIN_SELECT
-    );
-
-    const modifierGroup: ModifierGroup = {
-      id: modifierGroupId,
-      name: modifierGroupName,
-      type: type || undefined,
-      maxSelect: maxSelectStr ? parseInt(maxSelectStr, 10) : undefined,
-      minSelect: minSelectStr ? parseInt(minSelectStr, 10) : undefined,
-      modifiers: [],
-    };
-
-    modifierGroupsMap.set(modifierGroupId, modifierGroup);
-    modifierGroupNameToIdMap.set(modifierGroupName, modifierGroupId);
-    return modifierGroupId;
+    const parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? undefined : parsed;
   }
 
-  private static addModifierToGroup(
-    modifierGroupId: string,
-    modifierGroupsMap: Map<string, ModifierGroup>,
-    row: TableRow,
-    mappings: ColumnMapping[]
-  ): void {
-    const modifierGroup = modifierGroupsMap.get(modifierGroupId);
-    if (!modifierGroup) return;
-
-    const modifierName = this.getValueByType(row, mappings, ColumnType.MODIFIER_NAME);
-    const priceStr = this.getValueByType(row, mappings, ColumnType.MODIFIER_PRICE);
-
-    if (!modifierName) return;
-
-    // Check if modifier already exists
-    const existingModifier = modifierGroup.modifiers.find((m) => m.name === modifierName);
-    if (existingModifier) return;
-
-    const modifier: Modifier = {
-      id: generateId('mod'),
-      name: modifierName,
-      price: priceStr ? parseFloat(priceStr) : 0,
-    };
-
-    modifierGroup.modifiers.push(modifier);
-  }
-
-  private static createProduct(
-    row: TableRow,
-    mappings: ColumnMapping[],
-    modifierGroupNameToIdMap: Map<string, string>
-  ): Product | null {
-    const productName = this.getValueByType(row, mappings, ColumnType.PRODUCT_NAME);
-    if (!productName) return null;
-
-    const description = this.getValueByType(row, mappings, ColumnType.PRODUCT_DESCRIPTION);
-    const image = this.getValueByType(row, mappings, ColumnType.PRODUCT_IMAGE);
-
-    // Get modifier group IDs
-    const modifierGroupName = this.getValueByType(
-      row,
-      mappings,
-      ColumnType.MODIFIER_GROUP_NAME
-    );
-    const modifers: string[] = [];
-    if (modifierGroupName && modifierGroupNameToIdMap.has(modifierGroupName)) {
-      modifers.push(modifierGroupNameToIdMap.get(modifierGroupName)!);
+  private static findProductById(data: UniversalProductData, productId: string): Product | undefined {
+    for (const category of data.categories) {
+      const product = category.products.find((item) => item.id === productId);
+      if (product) {
+        return product;
+      }
     }
 
-    // Get product parameters
-    const parameters: ProductParameter[] = [];
-    const paramId = this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_ID);
-    const paramWeight = this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_WEIGHT);
-    const paramPrice = this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_PRICE);
-
-    if (paramId && paramWeight && paramPrice) {
-      parameters.push({
-        id: paramId,
-        weight: parseFloat(String(paramWeight)),
-        price: parseFloat(String(paramPrice)),
-      });
-    }
-
-    return {
-      id: generateId('prod'),
-      name: productName,
-      description: description || undefined,
-      image: image || undefined,
-      modifers,
-      parameters,
-    };
+    return undefined;
   }
 }

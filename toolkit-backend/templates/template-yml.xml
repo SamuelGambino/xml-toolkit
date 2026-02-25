@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<yml_catalog date="2023-10-27 15:30">
+  <shop>
+    <!-- Основная информация о ресторане -->
+    <name>Гастро-Паб "Вкус и Цвет"</name>
+    <company>ООО "Ресторанные Технологии"</company>
+    <url>https://vcus-i-cvet.ru</url>
+    <currencies>
+      <currency id="RUR" rate="1"/>
+    </currencies>
+
+    <!-- Структура меню -->
+    <categories>
+      <category id="1">Завтраки</category>
+      <category id="2" parentId="1">Блюда из яиц</category>
+      <category id="3">Горячие блюда</category>
+      <category id="4">Напитки</category>
+    </categories>
+
+    <!-- Условия доставки (опционально) -->
+    <delivery-options>
+      <option cost="300" days="0" order-before="22"/>
+    </delivery-options>
+
+    <offers>
+      <!-- Пример 1: Сложное блюдо с параметрами (КБЖУ) -->
+      <offer id="1001" available="true">
+        <url>https://vcus-i-cvet.ru</url>
+        <price>2450</price>
+        <oldprice>2800</oldprice> <!-- Цена до скидки -->
+        <currencyId>RUR</currencyId>
+        <categoryId>3</categoryId>
+        <picture>https://vcus-i-cvet.ru</picture>
+        <store>true</store> <!-- Можно ли забрать самовывозом -->
+        <pickup>true</pickup>
+        <delivery>true</delivery>
+        
+        <name>Стейк Рибай с перечным соусом</name>
+        <vendor>Black Angus</vendor>
+        <description>
+          <![CDATA[
+          Сочный стейк из мраморной говядины зернового откорма. 
+          Подается с соусом на основе зеленого перца и сливок. 
+          Степень прожарки по умолчанию: Medium.
+          ]]>
+        </description>
+
+        <!-- Характеристики блюда -->
+        <param name="Вес" unit="г">350</param>
+        <param name="Белки" unit="г">22</param>
+        <param name="Жиры" unit="г">38</param>
+        <param name="Углеводы" unit="г">2</param>
+        <param name="Калорийность" unit="ккал">438</param>
+        <param name="Острота">Средняя</param>
+        
+        <!-- Страна происхождения ингредиентов -->
+        <country_of_origin>Россия</country_of_origin>
+      </offer>
+
+      <!-- Пример 2: Напиток с выбором объема (через разные offer id или параметры) -->
+      <offer id="2005" available="true">
+        <url>https://vcus-i-cvet.ru</url>
+        <price>450</price>
+        <currencyId>RUR</currencyId>
+        <categoryId>4</categoryId>
+        <name>Лимонад Лесные Ягоды</name>
+        <description>Освежающий напиток собственного приготовления с ежевикой и мятой.</description>
+        <param name="Объем" unit="мл">500</param>
+        <param name="Тип упаковки">Стеклянная бутылка</param>
+        <expiry>P1D</expiry> <!-- Срок годности: 1 день -->
+      </offer>
+    </offers>
+  </shop>
+</yml_catalog>
