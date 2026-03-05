@@ -28,16 +28,10 @@ export enum ColumnType {
   SUBCATEGORY_ID = 'SubcategoryId',
   CATEGORY_PARENT = 'CategoryParent',
   PRODUCT_PARAMETER_ID = 'ProductParameterId',
-  PRODUCT_PARAMETER_WEIGHT = 'ProductParameterWeight',
-  PRODUCT_PARAMETER_WEIGHT_UNIT = 'ProductParameterWeightUnit',
+  PRODUCT_PARAMETER = 'ProductParameter',
+  PRODUCT_PARAMETER_UNIT = 'ProductParameterUnit',
   PRODUCT_PARAMETER_PRICE = 'ProductParameterPrice',
-  PRODUCT_PARAMETER_OLD_PRICE = 'ProductParameterOldPrice',
-  PRODUCT_PARAMETER_PRICE_UNIT = 'ProductParameterPriceUnit',
-  PRODUCT_PARAMETER_PROTEINS = 'ProductParameterProteins',
-  PRODUCT_PARAMETER_FATS = 'ProductParameterFats',
-  PRODUCT_PARAMETER_CARBOHYDRATES = 'ProductParameterCarbohydrates',
-  PRODUCT_PARAMETER_CALORIES = 'ProductParameterCalories',
-  PRODUCT_PARAMETER_ENERGY_VALUE = 'ProductParameterEnergyValue',
+  PRODUCT_PARAMETER_IMAGE = 'ProductParameterImage',
 }
 
 /**
@@ -52,8 +46,14 @@ export interface ColumnMapping {
 /**
  * Request DTO for convert endpoint
  */
+export interface ProductParameterMapping {
+  param: number;
+  unitParam?: number;
+}
+
 export interface ConvertRequestDto {
   mappings: ColumnMapping[];
+  productParameters?: ProductParameterMapping[];
 }
 
 /**

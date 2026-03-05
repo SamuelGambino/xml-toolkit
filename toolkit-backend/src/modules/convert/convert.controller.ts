@@ -41,16 +41,10 @@ export class ConvertController {
         { value: ColumnType.PRODUCT_IMAGE, label: 'Product Image', labelRu: 'Изображение товара', description: 'URL or path to product image' },
         { value: ColumnType.PRODUCT_LINK, label: 'Product Link', labelRu: 'Ссылка на товар', description: 'URL to product page' },
         { value: ColumnType.PRODUCT_PARAMETER_ID, label: 'Product Parameter ID', labelRu: 'ID параметра товара', description: 'ID of the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_WEIGHT, label: 'Product Weight', labelRu: 'Вес товара', description: 'Weight value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_WEIGHT_UNIT, label: 'Product Weight Unit', labelRu: 'Ед.Изм. веса', description: 'Unit of measurement for the product weight' },
-        { value: ColumnType.PRODUCT_PARAMETER_PRICE, label: 'Product Price', labelRu: 'Цена товара', description: 'Price for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_OLD_PRICE, label: 'Product Old Price', labelRu: 'Старая цена товара', description: 'Old price for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_PRICE_UNIT, label: 'Product Price Unit', labelRu: 'Единица измерения цены товара', description: 'Unit of measurement for the product price' },
-        { value: ColumnType.PRODUCT_PARAMETER_PROTEINS, label: 'Product Proteins', labelRu: 'Белки', description: 'Proteins value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_FATS, label: 'Product Fats', labelRu: 'Жиры', description: 'Fats value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_CARBOHYDRATES, label: 'Product Carbohydrates', labelRu: 'Углеводы', description: 'Carbohydrates value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_CALORIES, label: 'Product Calories', labelRu: 'Калории', description: 'Calories value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_ENERGY_VALUE, label: 'Product Energy Value', labelRu: 'Энергетическая ценность', description: 'Energy value for the product parameter' },
+        { value: ColumnType.PRODUCT_PARAMETER, label: 'Product Parameter', labelRu: 'Параметр товара', description: 'Например: Вес' },
+        { value: ColumnType.PRODUCT_PARAMETER_UNIT, label: 'Product Parameter Unit', labelRu: 'Ед.изм. параметра товара', description: 'Единица измерения параметра товара' },
+        { value: ColumnType.PRODUCT_PARAMETER_PRICE, label: 'Product Parameter Price', labelRu: 'Цена параметра товара', description: 'Price for the product parameter' },
+        { value: ColumnType.PRODUCT_PARAMETER_IMAGE, label: 'Product Parameter Image', labelRu: 'Изображение параметра товара', description: 'Image for the product parameter' },
         { value: ColumnType.MODIFIER_GROUP_ID, label: 'Modifier Group ID', labelRu: 'ID группы модификаторов', description: 'ID of the modifier group' },
         { value: ColumnType.MODIFIER_GROUP_NAME, label: 'Modifier Group Name', labelRu: 'Имя группы модификаторов', description: 'Name of the modifier group' },
         { value: ColumnType.MODIFIER_GROUP_MAX_SELECT, label: 'Modifier Group Max Select', labelRu: 'Макс. выбор модификаторов', description: 'Maximum number of modifiers that can be selected' },
@@ -82,8 +76,15 @@ export class ConvertController {
       const targetType = req.body.targetType as TargetType | undefined;
 
       let mappings: ColumnMapping[] = [];
+      let productParameters: Array<{ param: number; unitParam?: number }> = [];
       if (req.body.mappings) {
-        mappings = typeof req.body.mappings === 'string' ? JSON.parse(req.body.mappings) : req.body.mappings;
+        const payload = typeof req.body.mappings === 'string' ? JSON.parse(req.body.mappings) : req.body.mappings;
+        if (Array.isArray(payload)) {
+          mappings = payload;
+        } else {
+          mappings = payload.mappings ?? [];
+          productParameters = payload.productParameters ?? [];
+        }
       }
 
       if (targetType) {
@@ -94,6 +95,7 @@ export class ConvertController {
           sourceType,
           targetType,
           mappings,
+          productParameters,
         });
 
         res.setHeader('Content-Type', built.mimeType);
@@ -109,6 +111,7 @@ export class ConvertController {
         sourceType,
         targetType: 'yml',
         mappings,
+        productParameters,
       });
 
       res.setHeader('Content-Type', built.mimeType);

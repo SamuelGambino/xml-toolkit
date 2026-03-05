@@ -4,7 +4,7 @@
 
 import { Readable } from 'stream';
 import { UniversalProductData } from './domain/models';
-import { ColumnMapping, ColumnType } from './convert.dto';
+import { ColumnMapping, ColumnType, ProductParameterMapping } from './convert.dto';
 import { FileParserFactory } from './parsers/fileParser';
 import { TableMapper } from './mappers/tableMapper';
 import { OutputBuilders, TargetType } from './builders/outputBuilders';
@@ -17,7 +17,8 @@ export class ConvertService {
     fileStream: Readable,
     mimeType: string,
     filename: string,
-    mappings: ColumnMapping[]
+    mappings: ColumnMapping[],
+    productParameters: ProductParameterMapping[] = []
   ): Promise<UniversalProductData> {
     const parser = FileParserFactory.createParser(mimeType, filename);
     const rows: Array<{ [columnIndex: number]: string | number }> = [];
@@ -26,7 +27,7 @@ export class ConvertService {
       rows.push(row);
     });
 
-    return TableMapper.mapToUniversalFormat(rows, mappings);
+    return TableMapper.mapToUniversalFormat(rows, mappings, productParameters);
   }
 
   async parseXmlToUniversal(xml: string, sourceType: XmlSourceType): Promise<UniversalProductData> {
@@ -44,8 +45,9 @@ export class ConvertService {
     sourceType: SourceType;
     targetType: TargetType;
     mappings?: ColumnMapping[];
+    productParameters?: ProductParameterMapping[];
   }) {
-    const { fileBuffer, mimeType, filename, sourceType, targetType, mappings = [] } = params;
+    const { fileBuffer, mimeType, filename, sourceType, targetType, mappings = [], productParameters = [] } = params;
 
     let universal: UniversalProductData;
 
@@ -58,7 +60,7 @@ export class ConvertService {
       const stream = new Readable();
       stream.push(fileBuffer);
       stream.push(null);
-      universal = await this.parseTableToUniversal(stream, mimeType, filename, mappings);
+      universal = await this.parseTableToUniversal(stream, mimeType, filename, mappings, productParameters);
     } else {
       const xml = fileBuffer.toString('utf-8');
       universal = await this.parseXmlToUniversal(xml, sourceType);

@@ -50,6 +50,11 @@ export interface IConfig {
   supportedOutputFormats?: IConfigOutputFormat[];
 }
 
+export interface IProductParameterMapping {
+  param: number;
+  unitParam?: number;
+}
+
 /**
  * Reads the first few lines/chars of XML and detects feed type:
  * - yml_catalog / dc_catalog -> Yandex / Delivery Club
@@ -132,28 +137,12 @@ export const useConvertStore = defineStore("convert", () => {
   };
 
   const uploadTable = (input: string | ArrayBuffer) => {
-    console.log("Uploading table, input type:", typeof input);
     inputFile.value.backendResult = null;
-    try {
-      const tableData = loadTable(input);
-      console.log("Table loaded:", {
-        rows: tableData.length,
-        firstRow: tableData[0],
-        columnCount: tableData[0]?.length,
-      });
-      inputFile.value.table = {
-        isConvertRes: false,
-        data: tableData,
-      };
-      console.log("Table stored in inputFile:", {
-        hasData: !!inputFile.value.table.data,
-        rowCount: inputFile.value.table.data?.length,
-        isConvertRes: inputFile.value.table.isConvertRes,
-      });
-    } catch (error) {
-      console.error("Error loading table:", error);
-      throw error;
-    }
+    const tableData = loadTable(input);
+    inputFile.value.table = {
+      isConvertRes: false,
+      data: tableData,
+    };
   };
 
   const convertXmlToTable = () => {
@@ -199,8 +188,7 @@ export const useConvertStore = defineStore("convert", () => {
         supportedColumnTypes: data.supportedColumnTypes ?? [],
         supportedOutputFormats: data.supportedOutputFormats ?? [],
       };
-    } catch (err) {
-      console.error("Failed to load config:", err);
+    } catch {
       actualConfig.value = {
         supportedColumnTypes: [],
         supportedOutputFormats: [],
@@ -210,42 +198,25 @@ export const useConvertStore = defineStore("convert", () => {
 
   const convertTableViaBackend = async (
     file: File,
-    mappings: { columnIndex: number; columnName: string; columnType: string }[]
-  ) => {
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("mappings", JSON.stringify(mappings));
-      
-      console.log("Sending request to backend with:", {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        mappingsCount: mappings.length,
-      });
-      
-      const response = await axios.post("http://localhost:3000/api/config/convert", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 300000, // 5 minutes timeout for large files
-      });
-      
-      const data = response.data;
-      console.log("Backend response received:", { success: data?.success, hasData: !!data?.data });
-      
-      if (data?.success && data?.data) {
-        inputFile.value.backendResult = data.data;
-      }
-      return data;
-    } catch (error: any) {
-      console.error("Backend request error:", error);
-      if (error.response) {
-        throw new Error(error.response.data?.error || `Server error: ${error.response.status}`);
-      } else if (error.request) {
-        throw new Error("Не удалось подключиться к серверу. Убедитесь, что backend запущен.");
-      } else {
-        throw new Error(error.message || "Неизвестная ошибка");
-      }
+    mappings: {
+      mappings: { columnIndex: number; columnName: string; columnType: string }[];
+      productParameters: IProductParameterMapping[];
     }
+  ) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("mappings", JSON.stringify(mappings));
+
+    const response = await axios.post("http://localhost:3000/api/config/convert", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 300000,
+    });
+
+    const data = response.data;
+    if (data?.success && data?.data) {
+      inputFile.value.backendResult = data.data;
+    }
+    return data;
   };
 
   return {

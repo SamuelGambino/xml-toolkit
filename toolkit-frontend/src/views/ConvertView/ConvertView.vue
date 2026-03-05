@@ -14,6 +14,7 @@ import {
   useConvertStore,
   getColumnNames,
   type XmlType,
+  type IProductParameterMapping,
 } from "@/stores/useConverter";
 import "./ConvertView.css";
 
@@ -31,6 +32,7 @@ const { inputFile, actualConfig } = storeToRefs(store);
 
 const uploadedFile = ref<NormalizedFile | null>(null);
 const columnMappings = ref<Record<number, string>>({});
+const productParameterLinks = ref<IProductParameterMapping[]>([]);
 const convertError = ref<string | null>(null);
 const uploadError = ref<string | null>(null);
 const convertLoading = ref(false);
@@ -39,6 +41,7 @@ const selectedOutputFormat = ref<string>("");
 const onUpload = async (file: NormalizedFile) => {
   uploadedFile.value = file;
   columnMappings.value = {};
+  productParameterLinks.value = [];
   convertError.value = null;
   uploadError.value = null;
   inputFile.value.backendResult = null;
@@ -59,7 +62,7 @@ const onUpload = async (file: NormalizedFile) => {
   if (file.type === "csv") {
     const encoder = new TextEncoder();
     const buffer = encoder.encode(file.data);
-    store.uploadTable(buffer);
+    store.uploadTable(buffer.buffer);
   } else {
     store.uploadTable(file.data);
   }
@@ -90,6 +93,18 @@ const convertToOptions = computed(() => {
 const hasTable = computed(() => Boolean(inputFile.value.table.data));
 const hasXml = computed(() => Boolean(inputFile.value.xml.data));
 
+const unresolvedUnitMappings = computed(() => {
+  const unitColumns = Object.entries(columnMappings.value)
+    .filter(([, value]) => value === "ProductParameterUnit")
+    .map(([columnIndex]) => Number(columnIndex));
+
+  const linkedUnits = new Set(
+    productParameterLinks.value.map((item) => item.unitParam).filter((v): v is number => typeof v === "number")
+  );
+
+  return unitColumns.filter((columnIndex) => !linkedUnits.has(columnIndex));
+});
+
 /** All columns have a mapping selected (required to enable Convert when table is loaded) */
 const allColumnsMapped = computed(() => {
   const cols = columns.value;
@@ -103,7 +118,7 @@ const allColumnsMapped = computed(() => {
 const canConvert = computed(() => {
   if (!hasTable.value && !hasXml.value) return false;
   if (hasXml.value && !inputFile.value.xml.selectedType) return false;
-  if (hasTable.value && !allColumnsMapped.value) return false;
+  if (hasTable.value && (!allColumnsMapped.value || unresolvedUnitMappings.value.length > 0)) return false;
   return true;
 });
 
@@ -124,6 +139,7 @@ const canConvertViaBackend = computed(
         "file" in uploadedFile.value &&
         uploadedFile.value.file &&
         allColumnsMapped.value &&
+        unresolvedUnitMappings.value.length === 0 &&
         mappingsForBackend.value.length === columns.value.length
     )
 );
@@ -141,14 +157,13 @@ const convert = async () => {
     
     convertLoading.value = true;
     try {
-      console.log("Sending to backend:", { fileName: file.name, mappings: mappingsForBackend.value });
-      const res = await store.convertTableViaBackend(file, mappingsForBackend.value);
-      console.log("Backend response:", res);
-      
+      const payload = {
+        mappings: mappingsForBackend.value,
+        productParameters: productParameterLinks.value,
+      };
+      const res = await store.convertTableViaBackend(file, payload);
       if (!res.success) {
         convertError.value = res.error ?? "Ошибка конвертации";
-      } else {
-        console.log("Conversion successful, result:", inputFile.value.backendResult);
       }
     } catch (e: unknown) {
       console.error("Convert error:", e);
@@ -221,8 +236,9 @@ onMounted(() => {
 });
 
 watch(convertToOptions, (opts) => {
-  if (opts.length === 1 && selectedOutputFormat.value !== opts[0].value) {
-    selectedOutputFormat.value = opts[0].value;
+  const first = opts[0];
+  if (opts.length === 1 && first && selectedOutputFormat.value !== first.value) {
+    selectedOutputFormat.value = first.value;
   }
 }, { immediate: true });
 </script>
@@ -281,7 +297,11 @@ watch(convertToOptions, (opts) => {
         :columns="columns"
         :supported-types="supportedTypes"
         v-model="columnMappings"
+        v-model:unit-links="productParameterLinks"
       />
+      <p v-if="unresolvedUnitMappings.length > 0" class="convert__error">
+        Для каждой колонки «ед.изм. параметра товара» нужно задать связь перетаскиванием.
+      </p>
       <p v-if="convertError" class="convert__error">{{ convertError }}</p>
     </div>
 
