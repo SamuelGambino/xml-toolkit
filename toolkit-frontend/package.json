@@ -18,6 +18,7 @@
     "@guolao/vue-monaco-editor": "^1.6.0",
     "@handsontable/vue3": "^16.2.0",
     "@headlessui/vue": "^1.7.23",
+    "@vue-dnd-kit/core": "^2.2.0",
     "@vueuse/core": "^14.1.0",
     "axios": "^1.13.2",
     "fast-xml-parser": "^5.3.3",

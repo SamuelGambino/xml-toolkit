@@ -29,6 +29,8 @@ export enum ColumnType {
   CATEGORY_PARENT = 'CategoryParent',
   PRODUCT_PARAMETER_ID = 'ProductParameterId',
   PRODUCT_PARAMETER_WEIGHT = 'ProductParameterWeight',
+  PRODUCT_PARAMETER_CHARACTERISTIC = 'ProductParameterCharacteristic',
+  PRODUCT_PARAMETER_CHARACTERISTIC_UNIT = 'ProductParameterCharacteristicUnit',
   PRODUCT_PARAMETER_WEIGHT_UNIT = 'ProductParameterWeightUnit',
   PRODUCT_PARAMETER_PRICE = 'ProductParameterPrice',
   PRODUCT_PARAMETER_OLD_PRICE = 'ProductParameterOldPrice',
