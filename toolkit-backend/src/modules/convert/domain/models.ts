@@ -32,6 +32,7 @@ export interface ProductParameterCharacteristic {
 
 export interface ProductParameter {
   id: string;
+  price: number;
   characteristics?: ProductParameterCharacteristic[];
 }
 

@@ -13,6 +13,7 @@ import {
 } from '../domain/models';
 import { CharacteristicColumnMapping, ColumnMapping, ColumnMappingConfig, ColumnType } from '../convert.dto';
 import { generateId } from '../domain/idGenerator';
+import fs from "fs";
 
 interface TableRow {
   [columnIndex: number]: string | number;
@@ -81,6 +82,8 @@ export class TableMapper {
         this.handleModifier(rowData.modifier, result, state);
       }
     });
+
+    fs.writeFileSync("debug.json", JSON.stringify(result, null, 2));
 
     return result;
   }
