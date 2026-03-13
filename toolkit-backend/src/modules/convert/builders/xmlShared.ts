@@ -19,16 +19,13 @@ export const createShopPayload = (data: UniversalProductData) => {
       parameters: {
         parameter: product.parameters.map((parameter) => ({
           $: { id: parameter.id },
-          weight: parameter.weight,
-          weightUnit: parameter.weightUnit ?? '',
-          price: parameter.price,
-          oldPrice: parameter.oldPrice ?? '',
-          priceUnit: parameter.priceUnit ?? '',
-          proteins: parameter.proteins ?? '',
-          fats: parameter.fats ?? '',
-          carbohydrates: parameter.carbohydrates ?? '',
-          calories: parameter.calories ?? '',
-          energyValue: parameter.energyValue ?? '',
+          characteristics: {
+            characteristic: (parameter.characteristics ?? []).map((characteristic) => ({
+              name: characteristic.name,
+              value: characteristic.value,
+              unit: characteristic.unit ?? '',
+            })),
+          },
         })),
       },
       categoryId: category.id,

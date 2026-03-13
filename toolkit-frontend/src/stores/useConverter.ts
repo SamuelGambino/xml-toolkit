@@ -210,7 +210,10 @@ export const useConvertStore = defineStore("convert", () => {
 
   const convertTableViaBackend = async (
     file: File,
-    mappings: { columnIndex: number; columnName: string; columnType: string }[]
+    mappings: {
+      columns: { columnIndex: number; columnName: string; columnType: string }[];
+      characteristic?: { columnIndex: number; columnName: string; unitIndex?: number }[];
+    }
   ) => {
     try {
       const formData = new FormData();
@@ -221,7 +224,7 @@ export const useConvertStore = defineStore("convert", () => {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        mappingsCount: mappings.length,
+        mappingsCount: mappings.columns.length,
       });
       
       const response = await axios.post("http://localhost:3000/api/config/convert", formData, {

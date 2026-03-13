@@ -8,9 +8,10 @@ import {
   ModifierGroup,
   Product,
   ProductParameter,
+  ProductParameterCharacteristic,
   UniversalProductData,
 } from '../domain/models';
-import { ColumnMapping, ColumnType } from '../convert.dto';
+import { CharacteristicColumnMapping, ColumnMapping, ColumnMappingConfig, ColumnType } from '../convert.dto';
 import { generateId } from '../domain/idGenerator';
 
 interface TableRow {
@@ -40,7 +41,7 @@ interface RowTypeData {
 }
 
 export class TableMapper {
-  static mapToUniversalFormat(rows: TableRow[], mappings: ColumnMapping[]): UniversalProductData {
+  static mapToUniversalFormat(rows: TableRow[], mappings: ColumnMappingConfig): UniversalProductData {
     const result: UniversalProductData = {
       categories: [],
       modifierGroups: [],
@@ -54,14 +55,14 @@ export class TableMapper {
     };
 
     rows.slice(1).forEach((row) => {
-      const rowData = this.collectRowTypeData(row, mappings);
+      const rowData = this.collectRowTypeData(row, mappings.columns, mappings.characteristic);
 
       if (rowData.category) {
         this.handleCategory(rowData.category, result, state);
       }
 
       if (rowData.subcategory) {
-        this.handleSubcategory(rowData.subcategory, row, mappings, result, state);
+        this.handleSubcategory(rowData.subcategory, row, mappings.columns, result, state);
       }
 
       if (rowData.product) {
@@ -84,7 +85,11 @@ export class TableMapper {
     return result;
   }
 
-  private static collectRowTypeData(row: TableRow, mappings: ColumnMapping[]): RowTypeData {
+  private static collectRowTypeData(
+    row: TableRow,
+    mappings: ColumnMapping[],
+    characteristicMappings?: CharacteristicColumnMapping[]
+  ): RowTypeData {
     const categoryName = this.getValueByType(row, mappings, ColumnType.CATEGORY_NAME);
     const categoryId = this.getValueByType(row, mappings, ColumnType.CATEGORY_ID);
     const categoryParent = this.getValueByType(row, mappings, ColumnType.CATEGORY_PARENT);
@@ -100,7 +105,7 @@ export class TableMapper {
     const modifierName = this.getValueByType(row, mappings, ColumnType.MODIFIER_NAME);
     const modifierId = this.getValueByType(row, mappings, ColumnType.MODIFIER_ID);
 
-    const parameter = this.collectParameter(row, mappings);
+    const parameter = this.collectParameter(row, mappings, characteristicMappings);
 
     const rowData: RowTypeData = {};
 
@@ -371,46 +376,40 @@ export class TableMapper {
 
   private static collectParameter(
     row: TableRow,
-    mappings: ColumnMapping[]
+    mappings: ColumnMapping[],
+    characteristicMappings?: CharacteristicColumnMapping[]
   ): ProductParameter | undefined {
     const id = this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_ID) || generateId('param');
-    const weight = this.parseNumber(
-      this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_WEIGHT)
-    );
-    const price = this.parseNumber(
-      this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_PRICE)
-    );
 
-    if (weight === null || price === null) {
+    const characteristics: ProductParameterCharacteristic[] = [];
+    (characteristicMappings ?? []).forEach((mapping) => {
+      const rawValue = row[mapping.columnIndex];
+      if (rawValue === undefined || rawValue === null || String(rawValue).trim() === '') {
+        return;
+      }
+
+      const unitRaw =
+        mapping.unitIndex !== undefined && mapping.unitIndex !== null ? row[mapping.unitIndex] : undefined;
+      const unit =
+        unitRaw === undefined || unitRaw === null || String(unitRaw).trim() === ''
+          ? undefined
+          : String(unitRaw).trim();
+
+      const numeric = this.parseNumber(String(rawValue));
+      characteristics.push({
+        name: mapping.columnName,
+        value: numeric ?? String(rawValue).trim(),
+        unit,
+      });
+    });
+
+    if (characteristics.length === 0) {
       return undefined;
     }
 
     return {
       id,
-      weight,
-      weightUnit: this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_WEIGHT_UNIT),
-      price,
-      oldPrice: this.parseNumber(
-        this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_OLD_PRICE)
-      ) ?? undefined,
-      priceUnit: this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_PRICE_UNIT),
-      proteins:
-        this.parseNumber(this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_PROTEINS)) ??
-        undefined,
-      fats:
-        this.parseNumber(this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_FATS)) ??
-        undefined,
-      carbohydrates:
-        this.parseNumber(
-          this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_CARBOHYDRATES)
-        ) ?? undefined,
-      calories:
-        this.parseNumber(this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_CALORIES)) ??
-        undefined,
-      energyValue:
-        this.parseNumber(
-          this.getValueByType(row, mappings, ColumnType.PRODUCT_PARAMETER_ENERGY_VALUE)
-        ) ?? undefined,
+      characteristics,
     };
   }
 

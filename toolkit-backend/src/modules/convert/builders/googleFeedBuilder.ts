@@ -12,7 +12,7 @@ export class GoogleFeedBuilder {
           'g:description': product.description ?? '',
           'g:link': product.link ?? '',
           'g:image_link': product.image ?? '',
-          'g:price': `${param?.price ?? 0} ${param?.priceUnit ?? 'RUB'}`,
+          'g:price': '0 RUB',
           'g:availability': 'in_stock',
           'g:product_type': this.buildProductType(category.id, data),
         };
