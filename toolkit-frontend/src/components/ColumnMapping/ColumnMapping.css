@@ -93,3 +93,18 @@
   border-top-right-radius: 4px;
   margin-top: -0.45rem;
 }
+
+.column-mapping__drag-handle {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: grab;
+  font-size: 1rem;
+  letter-spacing: -1px;
+  line-height: 1;
+  padding: 0.2rem;
+}
+
+.column-mapping__drag-handle:active {
+  cursor: grabbing;
+}

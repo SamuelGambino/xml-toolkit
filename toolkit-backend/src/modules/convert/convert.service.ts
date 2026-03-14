@@ -12,6 +12,10 @@ import { UniversalXmlParser, XmlSourceType } from './parsers/universalXmlParser'
 
 export type SourceType = 'table' | XmlSourceType;
 
+
+const SUPPORTED_SOURCE_TYPES: SourceType[] = ['table', 'yml', 'delivery_club', 'google_feed'];
+const SUPPORTED_TARGET_TYPES: TargetType[] = ['table', 'yml', 'delivery_club', 'google_feed'];
+
 export class ConvertService {
   async parseTableToUniversal(
     fileStream: Readable,
@@ -67,6 +71,14 @@ export class ConvertService {
     return this.buildOutput(universal, targetType);
   }
 
+  validateSourceType(sourceType: string): sourceType is SourceType {
+    return SUPPORTED_SOURCE_TYPES.includes(sourceType as SourceType);
+  }
+
+  validateTargetType(targetType: string): targetType is TargetType {
+    return SUPPORTED_TARGET_TYPES.includes(targetType as TargetType);
+  }
+
   validateMappings(mappings: ColumnMappingConfig): { valid: boolean; error?: string } {
     if (!mappings || !Array.isArray(mappings.columns) || mappings.columns.length === 0) {
       return { valid: false, error: 'No column mappings provided' };
@@ -92,12 +104,22 @@ export class ConvertService {
       };
     }
 
-    const hasCharacteristic = (mappings.characteristic ?? []).length > 0;
-    if (hasCharacteristic) {
-      const characteristicIndexes = new Set((mappings.characteristic ?? []).map((item) => item.columnIndex));
-      const invalidUnit = (mappings.characteristic ?? []).some(
-        (item) => item.unitIndex !== undefined && !characteristicIndexes.has(item.columnIndex)
-      );
+    const characteristics = mappings.characteristic ?? [];
+    if (characteristics.length > 0) {
+      const characteristicIndexes = new Set(characteristics.map((item) => item.columnIndex));
+      const unitIndexes = new Set<number>();
+
+      const invalidUnit = characteristics.some((item) => {
+        if (item.unitIndex === undefined) return false;
+        if (item.unitIndex === item.columnIndex) return true;
+        if (!indices.includes(item.unitIndex)) return true;
+        if (characteristicIndexes.has(item.unitIndex)) return true;
+        if (unitIndexes.has(item.unitIndex)) return true;
+
+        unitIndexes.add(item.unitIndex);
+        return false;
+      });
+
       if (invalidUnit) {
         return { valid: false, error: 'Invalid characteristic-unit mappings' };
       }
