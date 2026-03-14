@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { DnDProvider, makeConstraintArea } from '@vue-dnd-kit/core'
+import { DnDProvider } from '@vue-dnd-kit/core'
 import type { IConfigColumnType } from '@/stores/useConverter'
 import './ColumnMapping.css'
 import ColumnMappingRow from './ColumnMappingRow.vue'
@@ -19,12 +19,6 @@ const emit = defineEmits<{
 
 const PRODUCT_CHARACTERISTIC = 'ProductParameterCharacteristic'
 const PRODUCT_CHARACTERISTIC_UNIT = 'ProductParameterCharacteristicUnit'
-
-const listRef = ref<HTMLElement | null>(null)
-makeConstraintArea(listRef, {
-  axis: 'y',
-  restrictToArea: true,
-})
 
 const emptyOption = { value: '', labelRu: 'Не выбрано', label: 'Не выбрано' }
 
@@ -158,7 +152,7 @@ const updateOrder = (next: number[]) => {
   <div v-if="columns.length" class="column-mapping">
     <h4 class="column-mapping__title">Сопоставление колонок</h4>
     <DnDProvider>
-      <ul ref="listRef" class="column-mapping__list">
+      <ul class="column-mapping__list">
         <ColumnMappingRow
           v-for="(col, position) in orderedColumns"
           :key="col.index"
