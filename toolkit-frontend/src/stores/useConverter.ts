@@ -1,8 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { loadTable } from "@/services/convert/tableLoader";
-import { xmlToTable } from "@/services/convert/xmlParser";
-import { tableToXml } from "@/services/convert/xmlBuilder";
 import { apiClient } from "@/services/api/http";
 import type { Table } from "@/services/convert/TypesConvert";
 
@@ -141,25 +139,6 @@ export const useConvertStore = defineStore("convert", () => {
     }
   };
 
-  const convertXmlToTable = () => {
-    const data = xmlToTable(inputFile.value.xml.data);
-
-    inputFile.value.table = {
-      isConvertRes: data ? true : null,
-      data: data ? data : null,
-    }
-  };
-
-  const convertTableToXml = () => {
-    const data = tableToXml(inputFile.value.table.data);
-
-    inputFile.value.xml = {
-      ...inputFile.value.xml,
-      isConvertRes: data ? true : null,
-      data: data ?? null,
-    };
-  };
-
   const reset = () => {
     inputFile.value = {
       xml: {
@@ -218,8 +197,6 @@ export const useConvertStore = defineStore("convert", () => {
     actualConfig,
     inputFile,
     getConfig,
-    convertTableToXml,
-    convertXmlToTable,
     convertTableViaBackend,
     uploadTable,
     reset,
