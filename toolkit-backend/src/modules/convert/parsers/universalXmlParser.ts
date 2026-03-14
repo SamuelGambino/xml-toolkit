@@ -104,10 +104,11 @@ export class UniversalXmlParser {
       const parameters: ProductParameter[] = [
         {
           id: `${productId}_param`,
-          weight: Number(weightRaw?.split(' ')[0] ?? '0') || 0,
-          weightUnit: weightRaw?.split(' ')[1],
           price,
-          priceUnit: priceRaw.split(' ')[1],
+          characteristics: [
+            { name: 'Price', value: price, unit: priceRaw.split(' ')[1] },
+            { name: 'Weight', value: Number(weightRaw?.split(' ')[0] ?? '0') || 0, unit: weightRaw?.split(' ')[1] },
+          ],
         },
       ];
 
@@ -158,24 +159,31 @@ export class UniversalXmlParser {
     const paramsRaw = toArray(offer.parameters?.parameter);
 
     const parameters: ProductParameter[] = paramsRaw.length
-      ? paramsRaw.map((param: any, idx: number) => ({
-          id: text(param.id) ?? `${productId}_param_${idx + 1}`,
-          weight: numberOrUndefined(text(param.weight)) ?? 0,
-          weightUnit: text(param.weightUnit),
-          proteins: numberOrUndefined(text(param.proteins)),
-          fats: numberOrUndefined(text(param.fats)),
-          carbohydrates: numberOrUndefined(text(param.carbohydrates)),
-          calories: numberOrUndefined(text(param.calories)),
-          energyValue: numberOrUndefined(text(param.energyValue)),
-          price: numberOrUndefined(text(param.price)) ?? numberOrUndefined(text(offer.price)) ?? 0,
-          oldPrice: numberOrUndefined(text(param.oldPrice)),
-          priceUnit: text(param.priceUnit),
-        }))
+      ? paramsRaw.map((param: any, idx: number) => {
+          const mappedPrice = numberOrUndefined(text(param.price)) ?? numberOrUndefined(text(offer.price)) ?? 0;
+
+          return {
+            id: text(param.id) ?? `${productId}_param_${idx + 1}`,
+            price: mappedPrice,
+            characteristics: [
+              {
+                name: 'Price',
+                value: mappedPrice,
+                unit: text(param.priceUnit),
+              },
+              ...toArray(param.characteristics?.characteristic).map((item: any) => ({
+                name: text(item.name) ?? '',
+                value: numberOrUndefined(text(item.value)) ?? text(item.value) ?? '',
+                unit: text(item.unit),
+              })),
+            ].filter((item) => item.name !== ''),
+          };
+        })
       : [
           {
             id: `${productId}_param_1`,
-            weight: 0,
             price: numberOrUndefined(text(offer.price)) ?? 0,
+            characteristics: [{ name: 'Price', value: numberOrUndefined(text(offer.price)) ?? 0 }],
           },
         ];
 
