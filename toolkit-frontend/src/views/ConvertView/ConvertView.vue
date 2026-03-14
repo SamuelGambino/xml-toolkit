@@ -46,14 +46,12 @@ const onUpload = async (file: NormalizedFile) => {
   characteristicLinks.value = {}
   convertError.value = null;
   uploadError.value = null;
-  inputFile.value.backendResult = null;
 
   if (file.type === "xml") {
     store.setXmlData(file.data);
     inputFile.value.table.data = null;
     inputFile.value.table.isConvertRes = null;
-    selectedOutputFormat.value =
-      actualConfig.value?.supportedOutputFormats?.find((f) => f.value === "table")?.value ?? "";
+    selectedOutputFormat.value = convertToOptions.value[0]?.value ?? "";
     return;
   }
 
@@ -68,8 +66,7 @@ const onUpload = async (file: NormalizedFile) => {
   } else {
     store.uploadTable(file.data);
   }
-  selectedOutputFormat.value =
-    actualConfig.value?.supportedOutputFormats?.find((f) => f.value === "xml")?.value ?? "";
+  selectedOutputFormat.value = convertToOptions.value[0]?.value ?? "";
 };
 
 const onUploadError = (message: string) => {
@@ -163,6 +160,7 @@ const canConvertViaBackend = computed(
         "file" in uploadedFile.value &&
         uploadedFile.value.file &&
         allColumnsMapped.value &&
+        selectedOutputFormat.value &&
         mappingsForBackend.value.columns.length + (mappingsForBackend.value.characteristic?.length ?? 0) + new Set(Object.values(characteristicLinks.value)).size === columns.value.length
     )
 );
@@ -180,17 +178,27 @@ const convert = async () => {
     
     convertLoading.value = true;
     try {
-      console.log("Sending to backend:", { fileName: file.name, mappings: mappingsForBackend.value });
-      const res = await store.convertTableViaBackend(file, mappingsForBackend.value);
-      console.log("Backend response:", res);
-      
-      if (!res.success) {
-        convertError.value = res.error ?? "Ошибка конвертации";
+      const sourceType = 'table';
+      const targetType = selectedOutputFormat.value || 'yml';
+      const convertedContent = await store.convertTableViaBackend(file, mappingsForBackend.value, {
+        sourceType,
+        targetType,
+      });
+
+      if (targetType === 'table') {
+        store.uploadTable(convertedContent);
+        inputFile.value.table.isConvertRes = true;
+        inputFile.value.xml.isConvertRes = null;
+        inputFile.value.xml.data = null;
       } else {
-        console.log("Conversion successful, result:", inputFile.value.backendResult);
+        inputFile.value.xml = {
+          ...inputFile.value.xml,
+          data: convertedContent,
+          isConvertRes: true,
+        };
+        inputFile.value.table.isConvertRes = false;
       }
     } catch (e: unknown) {
-      console.error("Convert error:", e);
       convertError.value = e instanceof Error ? e.message : "Ошибка запроса";
     } finally {
       convertLoading.value = false;
@@ -236,7 +244,7 @@ const exportSourceFile = computed(() => {
 
 const exportResultFile = computed(() => {
   if (!uploadedFile.value) return null;
-  const type: "csv" | "xml" | "array" | null = uploadedFile.value.type === "xml" ? "csv" : "xml";
+  const type: "csv" | "xml" | "array" | null = inputFile.value.table.isConvertRes ? "csv" : "xml";
 
   return {
     rawFileName: uploadedFile.value.fileName,

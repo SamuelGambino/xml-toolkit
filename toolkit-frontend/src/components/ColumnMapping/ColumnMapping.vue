@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { DnDProvider } from '@vue-dnd-kit/core'
 import type { IConfigColumnType } from '@/stores/useConverter'
 import './ColumnMapping.css'
 import ColumnMappingRow from './ColumnMappingRow.vue'
@@ -143,29 +142,80 @@ const rowClass = (columnIndex: number): string[] => {
   return classes
 }
 
-const updateOrder = (next: number[]) => {
+const draggingColumn = ref<number | null>(null)
+const dropPreview = ref<{ targetIndex: number; insertAfter: boolean } | null>(null)
+
+const moveColumn = (draggedIndex: number, targetIndex: number, insertAfter: boolean) => {
+  if (draggedIndex === targetIndex && !insertAfter) return
+
+  const next = [...rowOrder.value]
+  const draggedPosition = next.indexOf(draggedIndex)
+  const targetPosition = next.indexOf(targetIndex)
+
+  if (draggedPosition < 0 || targetPosition < 0) return
+
+  next.splice(draggedPosition, 1)
+
+  const shiftedTarget = draggedPosition < targetPosition ? targetPosition - 1 : targetPosition
+  const insertPosition = insertAfter ? shiftedTarget + 1 : shiftedTarget
+
+  next.splice(insertPosition, 0, draggedIndex)
   rowOrder.value = next
+}
+
+const startDrag = (columnIndex: number) => {
+  draggingColumn.value = columnIndex
+}
+
+const endDrag = () => {
+  draggingColumn.value = null
+  dropPreview.value = null
+}
+
+const resolveInsertAfter = (clientY: number, rect: DOMRect) => clientY > rect.top + rect.height / 2
+
+const handleDragOver = (payload: { targetIndex: number; clientY: number; rect: DOMRect }) => {
+  if (draggingColumn.value === null) return
+
+  dropPreview.value = {
+    targetIndex: payload.targetIndex,
+    insertAfter: resolveInsertAfter(payload.clientY, payload.rect),
+  }
+}
+
+const handleDrop = (payload: { targetIndex: number; clientY: number; rect: DOMRect }) => {
+  if (draggingColumn.value === null) return
+
+  moveColumn(
+    draggingColumn.value,
+    payload.targetIndex,
+    resolveInsertAfter(payload.clientY, payload.rect)
+  )
+
+  endDrag()
 }
 </script>
 
 <template>
   <div v-if="columns.length" class="column-mapping">
     <h4 class="column-mapping__title">Сопоставление колонок</h4>
-    <DnDProvider>
-      <ul class="column-mapping__list">
-        <ColumnMappingRow
-          v-for="(col, position) in orderedColumns"
-          :key="col.index"
-          :column="col"
-          :order="rowOrder"
-          :position="position"
-          :mapped-type="modelValue[col.index] ?? ''"
-          :options="options"
-          :class-name="rowClass(col.index).join(' ')"
-          @update:mappedType="updateMapping(col.index, $event)"
-          @reorder="updateOrder"
-        />
-      </ul>
-    </DnDProvider>
+    <ul class="column-mapping__list">
+      <ColumnMappingRow
+        v-for="col in orderedColumns"
+        :key="col.index"
+        :column="col"
+        :mapped-type="modelValue[col.index] ?? ''"
+        :options="options"
+        :class-name="rowClass(col.index).join(' ')"
+        :is-dragging="draggingColumn === col.index"
+        :is-drop-before="dropPreview?.targetIndex === col.index && !dropPreview.insertAfter"
+        :is-drop-after="dropPreview?.targetIndex === col.index && dropPreview.insertAfter"
+        @update:mappedType="updateMapping(col.index, $event)"
+        @dragstart="startDrag"
+        @dragend="endDrag"
+        @dragover="handleDragOver"
+        @drop="handleDrop"
+      />
+    </ul>
   </div>
 </template>

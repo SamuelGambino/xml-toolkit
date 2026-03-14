@@ -3,7 +3,7 @@
  */
 
 import { Request, Response } from 'express';
-import { ConvertService, SourceType } from './convert.service';
+import { ConvertService } from './convert.service';
 import {
   ConfigResponseDto,
   ConvertResponseDto,
@@ -11,7 +11,6 @@ import {
   ColumnMappingConfig,
 } from './convert.dto';
 import multer from 'multer';
-import { TargetType } from './builders/outputBuilders';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -71,28 +70,27 @@ export class ConvertController {
         return;
       }
 
-      const sourceType = (req.body.sourceType as SourceType | undefined) ?? 'table';
-      const targetType = req.body.targetType as TargetType | undefined;
+      const sourceType = (req.body.sourceType as string | undefined) ?? 'table';
+      const targetType = (req.body.targetType as string | undefined) ?? 'yml';
+
+      if (!this.convertService.validateSourceType(sourceType)) {
+        res.status(400).json({ success: false, error: `Unsupported sourceType: ${sourceType}` } as ConvertResponseDto);
+        return;
+      }
+
+      if (!this.convertService.validateTargetType(targetType)) {
+        res.status(400).json({ success: false, error: `Unsupported targetType: ${targetType}` } as ConvertResponseDto);
+        return;
+      }
 
       let mappings: ColumnMappingConfig = { columns: [], characteristic: [] };
       if (req.body.mappings) {
-        mappings = typeof req.body.mappings === 'string' ? JSON.parse(req.body.mappings) : req.body.mappings;
-      }
-
-      if (targetType) {
-        const built = await this.convertService.convertByConfig({
-          fileBuffer: file.buffer,
-          mimeType: file.mimetype,
-          filename: file.originalname,
-          sourceType,
-          targetType,
-          mappings,
-        });
-
-        res.setHeader('Content-Type', built.mimeType);
-        res.setHeader('Content-Disposition', `attachment; filename="${built.filename}"`);
-        res.send(built.content);
-        return;
+        try {
+          mappings = typeof req.body.mappings === 'string' ? JSON.parse(req.body.mappings) : req.body.mappings;
+        } catch {
+          res.status(400).json({ success: false, error: 'Invalid mappings JSON' } as ConvertResponseDto);
+          return;
+        }
       }
 
       const built = await this.convertService.convertByConfig({
@@ -100,13 +98,15 @@ export class ConvertController {
         mimeType: file.mimetype,
         filename: file.originalname,
         sourceType,
-        targetType: 'yml',
+        targetType,
         mappings,
       });
 
       res.setHeader('Content-Type', built.mimeType);
       res.setHeader('Content-Disposition', `attachment; filename="${built.filename}"`);
       res.send(built.content);
+      return;
+
     } catch (error: any) {
       console.error('Convert error:', error);
       res.status(500).json({ success: false, error: error.message || 'Internal server error' } as ConvertResponseDto);

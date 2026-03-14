@@ -1,60 +1,75 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { makeDraggable, makeDroppable } from '@vue-dnd-kit/core'
+import { computed } from 'vue'
 import DropBox from '@/components/DropBox/DropBox.vue'
 
 const props = defineProps<{
   column: { index: number; name: string }
-  order: number[]
-  position: number
   mappedType: string
   options: { value: string; label: string }[]
   className?: string
+  isDragging?: boolean
+  isDropBefore?: boolean
+  isDropAfter?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:mappedType', value: string): void
-  (e: 'reorder', value: number[]): void
+  (e: 'dragstart', columnIndex: number): void
+  (e: 'dragend'): void
+  (e: 'dragover', payload: { targetIndex: number; clientY: number; rect: DOMRect }): void
+  (e: 'drop', payload: { targetIndex: number; clientY: number; rect: DOMRect }): void
 }>()
 
-const rowRef = ref<HTMLElement | null>(null)
+const dynamicClasses = computed(() => [
+  props.className,
+  props.isDragging ? 'column-mapping__row--dragging' : '',
+  props.isDropBefore ? 'column-mapping__row--drop-before' : '',
+  props.isDropAfter ? 'column-mapping__row--drop-after' : '',
+])
 
-const { isDragging, isDragOver } = makeDraggable(
-  rowRef,
-  {
-    activation: {
-      distance: 6,
-    },
-  },
-  () => [props.position, props.order]
-)
+const handleDragOver = (event: DragEvent) => {
+  event.preventDefault()
+  const element = event.currentTarget as HTMLElement | null
+  if (!element) return
 
-const { isDragOver: isDropOver } = makeDroppable(
-  rowRef,
-  {
-    events: {
-      onDrop: (event) => {
-        const result = event.helpers.suggestSort('vertical')
-        if (!result) return
-        emit('reorder', result.targetItems as number[])
-      },
-    },
-  },
-  () => props.order
-)
+  emit('dragover', {
+    targetIndex: props.column.index,
+    clientY: event.clientY,
+    rect: element.getBoundingClientRect(),
+  })
+}
 
-const dragOverClass = computed(() => {
-  if (!isDropOver.value || !isDragOver.value) return ''
-  if (isDragOver.value.top) return 'column-mapping__row--drop-before'
-  if (isDragOver.value.bottom) return 'column-mapping__row--drop-after'
-  return 'column-mapping__row--drop-inside'
-})
+const handleDrop = (event: DragEvent) => {
+  event.preventDefault()
+  const element = event.currentTarget as HTMLElement | null
+  if (!element) return
 
-const draggingClass = computed(() => (isDragging.value ? 'column-mapping__row--dragging' : ''))
+  emit('drop', {
+    targetIndex: props.column.index,
+    clientY: event.clientY,
+    rect: element.getBoundingClientRect(),
+  })
+}
 </script>
 
 <template>
-  <li ref="rowRef" class="column-mapping__row" :class="[className, draggingClass, dragOverClass]">
+  <li
+    class="column-mapping__row"
+    :class="dynamicClasses"
+    @dragover="handleDragOver"
+    @drop="handleDrop"
+  >
+    <button
+      type="button"
+      class="column-mapping__drag-handle"
+      draggable="true"
+      aria-label="Перетащить строку"
+      @dragstart="emit('dragstart', column.index)"
+      @dragend="emit('dragend')"
+    >
+      ⋮⋮
+    </button>
+
     <span class="column-mapping__name">{{ column.name }}</span>
     <DropBox :options="options" :modelValue="mappedType" @update:modelValue="emit('update:mappedType', $event)" />
   </li>
