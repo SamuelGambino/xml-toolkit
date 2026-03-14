@@ -26,11 +26,15 @@ const XML_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: "product_feed", label: "Other product feed" },
 ];
 
+const PRODUCT_CHARACTERISTIC = 'ProductParameterCharacteristic'
+const PRODUCT_CHARACTERISTIC_UNIT = 'ProductParameterCharacteristicUnit'
+
 const store = useConvertStore();
 const { inputFile, actualConfig } = storeToRefs(store);
 
 const uploadedFile = ref<NormalizedFile | null>(null);
 const columnMappings = ref<Record<number, string>>({});
+const characteristicLinks = ref<Record<number, number>>({})
 const convertError = ref<string | null>(null);
 const uploadError = ref<string | null>(null);
 const convertLoading = ref(false);
@@ -39,16 +43,15 @@ const selectedOutputFormat = ref<string>("");
 const onUpload = async (file: NormalizedFile) => {
   uploadedFile.value = file;
   columnMappings.value = {};
+  characteristicLinks.value = {}
   convertError.value = null;
   uploadError.value = null;
-  inputFile.value.backendResult = null;
 
   if (file.type === "xml") {
     store.setXmlData(file.data);
     inputFile.value.table.data = null;
     inputFile.value.table.isConvertRes = null;
-    selectedOutputFormat.value =
-      actualConfig.value?.supportedOutputFormats?.find((f) => f.value === "table")?.value ?? "";
+    selectedOutputFormat.value = convertToOptions.value[0]?.value ?? "";
     return;
   }
 
@@ -58,13 +61,12 @@ const onUpload = async (file: NormalizedFile) => {
 
   if (file.type === "csv") {
     const encoder = new TextEncoder();
-    const buffer = encoder.encode(file.data);
+    const buffer = encoder.encode(file.data).buffer;
     store.uploadTable(buffer);
   } else {
     store.uploadTable(file.data);
   }
-  selectedOutputFormat.value =
-    actualConfig.value?.supportedOutputFormats?.find((f) => f.value === "xml")?.value ?? "";
+  selectedOutputFormat.value = convertToOptions.value[0]?.value ?? "";
 };
 
 const onUploadError = (message: string) => {
@@ -91,13 +93,25 @@ const hasTable = computed(() => Boolean(inputFile.value.table.data));
 const hasXml = computed(() => Boolean(inputFile.value.xml.data));
 
 /** All columns have a mapping selected (required to enable Convert when table is loaded) */
+const isCharacteristicUnitMappingValid = computed(() => {
+  const unitIndexes = columns.value
+    .filter((col) => columnMappings.value[col.index] === PRODUCT_CHARACTERISTIC_UNIT)
+    .map((col) => col.index)
+
+  if (unitIndexes.length === 0) return true
+
+  const linkedUnits = new Set(Object.values(characteristicLinks.value))
+  return unitIndexes.every((unitIndex) => linkedUnits.has(unitIndex))
+})
+
 const allColumnsMapped = computed(() => {
   const cols = columns.value;
   if (cols.length === 0) return true;
-  return cols.every((col) => {
+  const mapped = cols.every((col) => {
     const v = columnMappings.value[col.index];
     return v != null && String(v).trim() !== "";
   });
+  return mapped && isCharacteristicUnitMappingValid.value
 });
 
 const canConvert = computed(() => {
@@ -108,12 +122,34 @@ const canConvert = computed(() => {
 });
 
 const mappingsForBackend = computed(() => {
-  const arr: { columnIndex: number; columnName: string; columnType: string }[] = [];
+  const columnsMappings: { columnIndex: number; columnName: string; columnType: string }[] = [];
+  const characteristics: { columnIndex: number; columnName: string; unitIndex?: number }[] = [];
+
   columns.value.forEach((col) => {
     const t = columnMappings.value[col.index];
-    if (t) arr.push({ columnIndex: col.index, columnName: col.name, columnType: t });
+    if (!t) return
+
+    if (t === PRODUCT_CHARACTERISTIC || t === PRODUCT_CHARACTERISTIC_UNIT) {
+      return
+    }
+
+    columnsMappings.push({ columnIndex: col.index, columnName: col.name, columnType: t });
   });
-  return arr;
+
+  columns.value
+    .filter((col) => columnMappings.value[col.index] === PRODUCT_CHARACTERISTIC)
+    .forEach((col) => {
+      characteristics.push({
+        columnIndex: col.index,
+        columnName: col.name,
+        unitIndex: characteristicLinks.value[col.index],
+      })
+    })
+
+  return {
+    columns: columnsMappings,
+    characteristic: characteristics,
+  };
 });
 
 const canConvertViaBackend = computed(
@@ -124,7 +160,8 @@ const canConvertViaBackend = computed(
         "file" in uploadedFile.value &&
         uploadedFile.value.file &&
         allColumnsMapped.value &&
-        mappingsForBackend.value.length === columns.value.length
+        selectedOutputFormat.value &&
+        mappingsForBackend.value.columns.length + (mappingsForBackend.value.characteristic?.length ?? 0) + new Set(Object.values(characteristicLinks.value)).size === columns.value.length
     )
 );
 
@@ -141,17 +178,27 @@ const convert = async () => {
     
     convertLoading.value = true;
     try {
-      console.log("Sending to backend:", { fileName: file.name, mappings: mappingsForBackend.value });
-      const res = await store.convertTableViaBackend(file, mappingsForBackend.value);
-      console.log("Backend response:", res);
-      
-      if (!res.success) {
-        convertError.value = res.error ?? "Ошибка конвертации";
+      const sourceType = 'table';
+      const targetType = selectedOutputFormat.value || 'yml';
+      const convertedContent = await store.convertTableViaBackend(file, mappingsForBackend.value, {
+        sourceType,
+        targetType,
+      });
+
+      if (targetType === 'table') {
+        store.uploadTable(convertedContent);
+        inputFile.value.table.isConvertRes = true;
+        inputFile.value.xml.isConvertRes = null;
+        inputFile.value.xml.data = null;
       } else {
-        console.log("Conversion successful, result:", inputFile.value.backendResult);
+        inputFile.value.xml = {
+          ...inputFile.value.xml,
+          data: convertedContent,
+          isConvertRes: true,
+        };
+        inputFile.value.table.isConvertRes = false;
       }
     } catch (e: unknown) {
-      console.error("Convert error:", e);
       convertError.value = e instanceof Error ? e.message : "Ошибка запроса";
     } finally {
       convertLoading.value = false;
@@ -197,7 +244,7 @@ const exportSourceFile = computed(() => {
 
 const exportResultFile = computed(() => {
   if (!uploadedFile.value) return null;
-  const type: "csv" | "xml" | "array" | null = uploadedFile.value.type === "xml" ? "csv" : "xml";
+  const type: "csv" | "xml" | "array" | null = inputFile.value.table.isConvertRes ? "csv" : "xml";
 
   return {
     rawFileName: uploadedFile.value.fileName,
@@ -221,8 +268,9 @@ onMounted(() => {
 });
 
 watch(convertToOptions, (opts) => {
-  if (opts.length === 1 && selectedOutputFormat.value !== opts[0].value) {
-    selectedOutputFormat.value = opts[0].value;
+  const first = opts[0]
+  if (opts.length === 1 && first && selectedOutputFormat.value !== first.value) {
+    selectedOutputFormat.value = first.value;
   }
 }, { immediate: true });
 </script>
@@ -281,7 +329,11 @@ watch(convertToOptions, (opts) => {
         :columns="columns"
         :supported-types="supportedTypes"
         v-model="columnMappings"
+        v-model:characteristicLinks="characteristicLinks"
       />
+      <p v-if="showSourceTable && !isCharacteristicUnitMappingValid" class="convert__error">
+        Для поля "Ед.Изм. характеристики товара" должна быть выбрана связанная колонка "Характеристика товара".
+      </p>
       <p v-if="convertError" class="convert__error">{{ convertError }}</p>
     </div>
 

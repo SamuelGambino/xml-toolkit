@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { loadTable } from "@/services/convert/tableLoader";
 import { xmlToTable } from "@/services/convert/xmlParser";
 import { tableToXml } from "@/services/convert/xmlBuilder";
-import axios from "axios";
+import { apiClient } from "@/services/api/http";
 import type { Table } from "@/services/convert/TypesConvert";
 
 /** Detected/selected XML feed type for conversion */
@@ -28,8 +28,6 @@ export interface IConvertStore {
     data: Table | null;
     isConvertRes: boolean | null;
   };
-  /** Result from backend convert (universal object) */
-  backendResult: unknown | null;
 }
 
 export interface IConfigColumnType {
@@ -109,7 +107,6 @@ export const useConvertStore = defineStore("convert", () => {
       data: null,
       isConvertRes: null,
     },
-    backendResult: null,
   });
   const actualConfig = ref<IConfig | null>(null);
 
@@ -132,24 +129,12 @@ export const useConvertStore = defineStore("convert", () => {
   };
 
   const uploadTable = (input: string | ArrayBuffer) => {
-    console.log("Uploading table, input type:", typeof input);
-    inputFile.value.backendResult = null;
     try {
       const tableData = loadTable(input);
-      console.log("Table loaded:", {
-        rows: tableData.length,
-        firstRow: tableData[0],
-        columnCount: tableData[0]?.length,
-      });
       inputFile.value.table = {
         isConvertRes: false,
         data: tableData,
       };
-      console.log("Table stored in inputFile:", {
-        hasData: !!inputFile.value.table.data,
-        rowCount: inputFile.value.table.data?.length,
-        isConvertRes: inputFile.value.table.isConvertRes,
-      });
     } catch (error) {
       console.error("Error loading table:", error);
       throw error;
@@ -187,13 +172,12 @@ export const useConvertStore = defineStore("convert", () => {
         isConvertRes: null,
         data: null,
       },
-      backendResult: null,
     };
   };
 
   const getConfig = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/config/convert");
+      const response = await apiClient.get("/api/config/convert");
       const data = response.data;
       actualConfig.value = {
         supportedColumnTypes: data.supportedColumnTypes ?? [],
@@ -210,42 +194,24 @@ export const useConvertStore = defineStore("convert", () => {
 
   const convertTableViaBackend = async (
     file: File,
-    mappings: { columnIndex: number; columnName: string; columnType: string }[]
+    mappings: {
+      columns: { columnIndex: number; columnName: string; columnType: string }[];
+      characteristic?: { columnIndex: number; columnName: string; unitIndex?: number }[];
+    },
+    params: { sourceType: string; targetType: string }
   ) => {
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("mappings", JSON.stringify(mappings));
-      
-      console.log("Sending request to backend with:", {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        mappingsCount: mappings.length,
-      });
-      
-      const response = await axios.post("http://localhost:3000/api/config/convert", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 300000, // 5 minutes timeout for large files
-      });
-      
-      const data = response.data;
-      console.log("Backend response received:", { success: data?.success, hasData: !!data?.data });
-      
-      if (data?.success && data?.data) {
-        inputFile.value.backendResult = data.data;
-      }
-      return data;
-    } catch (error: any) {
-      console.error("Backend request error:", error);
-      if (error.response) {
-        throw new Error(error.response.data?.error || `Server error: ${error.response.status}`);
-      } else if (error.request) {
-        throw new Error("Не удалось подключиться к серверу. Убедитесь, что backend запущен.");
-      } else {
-        throw new Error(error.message || "Неизвестная ошибка");
-      }
-    }
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('mappings', JSON.stringify(mappings));
+    formData.append('sourceType', params.sourceType);
+    formData.append('targetType', params.targetType);
+
+    const response = await apiClient.post('/api/config/convert', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      responseType: 'text',
+    });
+
+    return response.data as string;
   };
 
   return {

@@ -24,18 +24,16 @@ export interface Category {
   products: Product[];
 }
 
+export interface ProductParameterCharacteristic {
+  name: string;
+  value: string | number;
+  unit?: string;
+}
+
 export interface ProductParameter {
   id: string;
-  weight: number;
-  weightUnit?: string;
-  proteins?: number;
-  fats?: number;
-  carbohydrates?: number;
-  calories?: number;
-  energyValue?: number;
   price: number;
-  oldPrice?: number;
-  priceUnit?: string;
+  characteristics?: ProductParameterCharacteristic[];
 }
 
 export interface Product {

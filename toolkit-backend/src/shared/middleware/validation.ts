@@ -15,16 +15,25 @@ export function validateConvertRequest(
 ): void {
   const body = req.body as ConvertRequestDto;
 
-  if (!body.mappings || !Array.isArray(body.mappings)) {
+  if (!body.mappings || !Array.isArray(body.mappings.columns)) {
     res.status(400).json({
       success: false,
-      error: 'Invalid mappings: must be an array',
+      error: 'Invalid mappings: columns must be an array',
+    });
+    return;
+  }
+
+
+  if (body.mappings.characteristic && !Array.isArray(body.mappings.characteristic)) {
+    res.status(400).json({
+      success: false,
+      error: 'Invalid mappings: characteristic must be an array',
     });
     return;
   }
 
   // Validate each mapping
-  for (const mapping of body.mappings) {
+  for (const mapping of body.mappings.columns) {
     if (
       typeof mapping.columnIndex !== 'number' ||
       typeof mapping.columnName !== 'string' ||

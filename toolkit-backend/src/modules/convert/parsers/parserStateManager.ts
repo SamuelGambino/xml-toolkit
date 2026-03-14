@@ -24,7 +24,9 @@ export interface ProductData {
 export interface ParameterData {
   id?: string | number | null;
   weight?: string | number | null;
+  weightUnit?: string | null;
   price?: string | number | null;
+  priceUnit?: string | null;
 }
 
 export interface ModifierGroupData {
@@ -186,17 +188,27 @@ export class ParserStateManager {
       return null;
     }
 
-    const weight = this.parseNumber(data.weight);
-    const price = this.parseNumber(data.price);
+    const parsedPrice = this.parseNumber(data.price)
 
-    if (weight === null || price === null) {
+    const characteristics = [
+      { key: 'weight', label: 'Weight', value: this.parseNumber(data.weight), unit: data.weightUnit },
+      { key: 'price', label: 'Price', value: parsedPrice, unit: data.priceUnit },
+    ]
+      .filter((item) => item.value !== null)
+      .map((item) => ({
+        name: item.label,
+        value: item.value as number,
+        unit: this.normalizeText(item.unit) || undefined,
+      }));
+
+    if (characteristics.length === 0) {
       return null;
     }
 
     const parameter: ProductParameter = {
       id,
-      weight,
-      price,
+      price: parsedPrice ?? 0,
+      characteristics,
     };
 
     this.currentProduct.parameters.push(parameter);

@@ -3,15 +3,14 @@
  */
 
 import { Request, Response } from 'express';
-import { ConvertService, SourceType } from './convert.service';
+import { ConvertService } from './convert.service';
 import {
   ConfigResponseDto,
   ConvertResponseDto,
   ColumnType,
-  ColumnMapping,
+  ColumnMappingConfig,
 } from './convert.dto';
 import multer from 'multer';
-import { TargetType } from './builders/outputBuilders';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -41,16 +40,9 @@ export class ConvertController {
         { value: ColumnType.PRODUCT_IMAGE, label: 'Product Image', labelRu: 'Изображение товара', description: 'URL or path to product image' },
         { value: ColumnType.PRODUCT_LINK, label: 'Product Link', labelRu: 'Ссылка на товар', description: 'URL to product page' },
         { value: ColumnType.PRODUCT_PARAMETER_ID, label: 'Product Parameter ID', labelRu: 'ID параметра товара', description: 'ID of the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_WEIGHT, label: 'Product Weight', labelRu: 'Вес товара', description: 'Weight value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_WEIGHT_UNIT, label: 'Product Weight Unit', labelRu: 'Ед.Изм. веса', description: 'Unit of measurement for the product weight' },
-        { value: ColumnType.PRODUCT_PARAMETER_PRICE, label: 'Product Price', labelRu: 'Цена товара', description: 'Price for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_OLD_PRICE, label: 'Product Old Price', labelRu: 'Старая цена товара', description: 'Old price for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_PRICE_UNIT, label: 'Product Price Unit', labelRu: 'Единица измерения цены товара', description: 'Unit of measurement for the product price' },
-        { value: ColumnType.PRODUCT_PARAMETER_PROTEINS, label: 'Product Proteins', labelRu: 'Белки', description: 'Proteins value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_FATS, label: 'Product Fats', labelRu: 'Жиры', description: 'Fats value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_CARBOHYDRATES, label: 'Product Carbohydrates', labelRu: 'Углеводы', description: 'Carbohydrates value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_CALORIES, label: 'Product Calories', labelRu: 'Калории', description: 'Calories value for the product parameter' },
-        { value: ColumnType.PRODUCT_PARAMETER_ENERGY_VALUE, label: 'Product Energy Value', labelRu: 'Энергетическая ценность', description: 'Energy value for the product parameter' },
+        { value: ColumnType.PRODUCT_PARAMETER_CHARACTERISTIC, label: 'Product Parameter Characteristic', labelRu: 'Характеристика товара', description: 'Characteristic value column for product parameter' },
+        { value: ColumnType.PRODUCT_PARAMETER_CHARACTERISTIC_UNIT, label: 'Product Parameter Characteristic Unit', labelRu: 'Ед.Изм. характеристики товара', description: 'Unit column for characteristic values' },
+        { value: ColumnType.PRODUCT_PARAMETER_PRICE, label: 'Product Parameter Price', labelRu: 'Цена товара', description: 'Price value for the product parameter' },
         { value: ColumnType.MODIFIER_GROUP_ID, label: 'Modifier Group ID', labelRu: 'ID группы модификаторов', description: 'ID of the modifier group' },
         { value: ColumnType.MODIFIER_GROUP_NAME, label: 'Modifier Group Name', labelRu: 'Имя группы модификаторов', description: 'Name of the modifier group' },
         { value: ColumnType.MODIFIER_GROUP_MAX_SELECT, label: 'Modifier Group Max Select', labelRu: 'Макс. выбор модификаторов', description: 'Maximum number of modifiers that can be selected' },
@@ -78,28 +70,27 @@ export class ConvertController {
         return;
       }
 
-      const sourceType = (req.body.sourceType as SourceType | undefined) ?? 'table';
-      const targetType = req.body.targetType as TargetType | undefined;
+      const sourceType = (req.body.sourceType as string | undefined) ?? 'table';
+      const targetType = (req.body.targetType as string | undefined) ?? 'yml';
 
-      let mappings: ColumnMapping[] = [];
-      if (req.body.mappings) {
-        mappings = typeof req.body.mappings === 'string' ? JSON.parse(req.body.mappings) : req.body.mappings;
+      if (!this.convertService.validateSourceType(sourceType)) {
+        res.status(400).json({ success: false, error: `Unsupported sourceType: ${sourceType}` } as ConvertResponseDto);
+        return;
       }
 
-      if (targetType) {
-        const built = await this.convertService.convertByConfig({
-          fileBuffer: file.buffer,
-          mimeType: file.mimetype,
-          filename: file.originalname,
-          sourceType,
-          targetType,
-          mappings,
-        });
-
-        res.setHeader('Content-Type', built.mimeType);
-        res.setHeader('Content-Disposition', `attachment; filename="${built.filename}"`);
-        res.send(built.content);
+      if (!this.convertService.validateTargetType(targetType)) {
+        res.status(400).json({ success: false, error: `Unsupported targetType: ${targetType}` } as ConvertResponseDto);
         return;
+      }
+
+      let mappings: ColumnMappingConfig = { columns: [], characteristic: [] };
+      if (req.body.mappings) {
+        try {
+          mappings = typeof req.body.mappings === 'string' ? JSON.parse(req.body.mappings) : req.body.mappings;
+        } catch {
+          res.status(400).json({ success: false, error: 'Invalid mappings JSON' } as ConvertResponseDto);
+          return;
+        }
       }
 
       const built = await this.convertService.convertByConfig({
@@ -107,13 +98,15 @@ export class ConvertController {
         mimeType: file.mimetype,
         filename: file.originalname,
         sourceType,
-        targetType: 'yml',
+        targetType,
         mappings,
       });
 
       res.setHeader('Content-Type', built.mimeType);
       res.setHeader('Content-Disposition', `attachment; filename="${built.filename}"`);
       res.send(built.content);
+      return;
+
     } catch (error: any) {
       console.error('Convert error:', error);
       res.status(500).json({ success: false, error: error.message || 'Internal server error' } as ConvertResponseDto);
