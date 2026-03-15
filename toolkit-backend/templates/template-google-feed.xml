@@ -12,9 +12,15 @@
       <g:link>https://rest-example.com</g:link>
       <g:image_link>https://rest-example.com/image.jpg</g:image_link>
       <g:price>450.00 RUB</g:price> <!-- Цена товара с валютой через пробел -->
-      <g:availability>in_stock</g:availability> <!-- Default значение -->
+      <g:availability>in_stock</g:availability> <!-- Default значение, но так же есть out_of_stock (нет в наличии), preorder (предзаказ) -->
       <g:product_type>Пицца > Классика</g:product_type> <!-- Для вложенности категорий используется " > " -->
       <g:size>30 см</g:size> <!-- Вес параметра -->
+      <g:brand>Some</g:brand> <!-- Бренд товара, обязательное поле для большинства товаров, кроме еды -->
+      <!--Уникальные поля Google feed-->
+      <g:gtin></g:gtin> <!-- Международный код (EAN для Европы, UPC для США, ISBN для книг). -->
+      <g:mpn></g:mpn> <!-- Номер детали производителя (если нет GTIN). -->
+      <g:identifier_exists>no</g:identifier_exists> <!-- Если у товара нет GTIN и бренда (например, хендмейд), нужно поставить no. -->
+      <g:google_product_category></g:google_product_category> <!-- Категория товара по классификации Google. Помогает системе понять контекст -->
     </item>
 
     <item>
