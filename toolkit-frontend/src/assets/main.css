@@ -1,23 +1,23 @@
 @import './base.css';
 
 #app {
-  padding: 2rem;
+  padding: 1.5rem;
   font-weight: normal;
+  min-height: 100vh;
 }
 
 a,
 .green {
   text-decoration: none;
-  color: hsla(6, 78%, 57%, 1);
-  transition: 0.4s;
-  /* padding: 3px; */
+  color: var(--color-accent);
+  transition: 0.25s ease;
 }
 
 @media (hover: hover) {
   a:hover {
-    border-radius: 90px;
-    box-shadow: 0 0 15px 5px hsla(6, 78%, 57%, 0.2); 
-    background-color: hsla(6, 78%, 57%, 0.2);
+    border-radius: 999px;
+    box-shadow: var(--shadow-accent);
+    background-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
   }
 }
 

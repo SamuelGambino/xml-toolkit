@@ -1,14 +1,17 @@
 .search {
     display: flex;
     width: 100%;
-    background-color: transparent;
-    color: white;
-    padding: 5px;
-    border-radius: 8px;
-    border: 1px solid hsla(6, 78%, 57%, 1);
+    background-color: color-mix(in srgb, var(--gray-950) 86%, var(--gray-700));
+    color: var(--color-heading);
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
 }
 
-.search:disabled {
-  opacity: 0.5;
-  cursor: default;
+.search:focus {
+    outline: none;
+    border-color: var(--color-border-hover);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
+
+.search:disabled { opacity: 0.5; cursor: default; }

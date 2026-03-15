@@ -41,7 +41,7 @@
 .loader-item {
   width: 8px;
   height: 8px;
-  background-color: hsla(6, 78%, 57%, 1);
+  background-color: var(--color-accent);
   border-radius: 50%;
   position: relative;
   bottom: 0;

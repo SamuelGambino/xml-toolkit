@@ -37,14 +37,6 @@ watch(
 watch(localData, (newVal) => {
   emit("update", JSON.parse(JSON.stringify(newVal)));
 }, { deep: true });
-
-// Номера строк: 1, 2, 3...
-const rowHeaders = true;
-// Номера колонок: 1, 2, 3...
-const colHeaders = computed(() => {
-  const cols = localData.value[0]?.length ?? 0;
-  return Array.from({ length: cols }, (_, i) => String(i + 1));
-});
 </script>
 
 <template>
@@ -52,8 +44,8 @@ const colHeaders = computed(() => {
     <HotTable
       themeName="ht-theme-main-dark"
       :data="localData"
-      :rowHeaders="rowHeaders"
-      :colHeaders="colHeaders"
+      :rowHeaders="true"
+      :colHeaders="true"
       stretchH="all"
       search
       manualColumnMove

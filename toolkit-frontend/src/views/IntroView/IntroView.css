@@ -1,51 +1,43 @@
 .intro-view {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   padding: 2rem;
   align-items: center;
   text-align: center;
 }
 
-.intro-view__header {
-  margin-bottom: 2rem;
-}
+.intro-view__header { margin-bottom: 1.25rem; }
 
 .intro-view__title {
-  font-size: 2.5rem;
-  font-weight: bold;
+  font-size: 2.6rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   margin-bottom: 0.5rem;
+  color: var(--color-heading);
 }
 
 .intro-view__subtitle {
-  font-size: 1.2rem;
-  color: #555;
+  font-size: 1.1rem;
+  color: var(--color-muted);
+  max-width: 700px;
 }
 
 .intro-view__features {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .intro-view__feature {
-  max-width: 200px;
+  max-width: 220px;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
 }
 
-.intro-view__feature-icon {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 1rem;
-}
-
-.intro-view__feature-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.intro-view__feature-desc {
-  font-size: 0.95rem;
-  color: #666;
-}
+.intro-view__feature-icon { width: 50px; height: 50px; margin-bottom: 1rem; }
+.intro-view__feature-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+.intro-view__feature-desc { font-size: 0.95rem; color: var(--color-muted); }

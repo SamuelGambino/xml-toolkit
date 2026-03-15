@@ -45,8 +45,8 @@
   right: 0.35rem;
   height: 3px;
   border-radius: 999px;
-  background: hsl(6, 78%, 57%);
-  box-shadow: 0 0 0 3px hsla(6, 78%, 57%, 0.15);
+  background: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 15%, transparent);
 }
 
 .column-mapping__row--drop-before::before {
@@ -64,8 +64,8 @@
 
 .column-mapping__row--characteristic,
 .column-mapping__row--unit {
-  border-color: hsla(6, 78%, 57%, 0.7);
-  box-shadow: 0 0 0 2px hsla(6, 78%, 57%, 0.08);
+  border-color: color-mix(in srgb, var(--color-accent) 70%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 8%, transparent);
 }
 
 .column-mapping__row--characteristic-pending {

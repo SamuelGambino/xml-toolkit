@@ -119,15 +119,17 @@ const rowClass = (columnIndex: number): string[] => {
   const classes: string[] = []
   const type = props.modelValue[columnIndex]
 
-  if (!pairsState.value.hasUnpairedUnit) return classes
-
   if (type === PRODUCT_CHARACTERISTIC) {
-    classes.push('column-mapping__row--characteristic')
-    classes.push(
-      pairedCharacteristics.value.has(columnIndex)
-        ? 'column-mapping__row--characteristic-paired'
-        : 'column-mapping__row--characteristic-pending'
-    )
+    const isPairedCharacteristic = pairedCharacteristics.value.has(columnIndex)
+
+    if (isPairedCharacteristic || pairsState.value.hasUnpairedUnit) {
+      classes.push('column-mapping__row--characteristic')
+      classes.push(
+        isPairedCharacteristic
+          ? 'column-mapping__row--characteristic-paired'
+          : 'column-mapping__row--characteristic-pending'
+      )
+    }
   }
 
   if (type === PRODUCT_CHARACTERISTIC_UNIT) {

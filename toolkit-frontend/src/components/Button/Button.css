@@ -2,41 +2,20 @@
   display: flex;
   justify-content: center;
   padding: 12px 24px;
-  background: none;
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
   outline: none;
-  border: 0;
-  border-radius: 4px;
-  color: white;
-  border: 1px solid hsla(6, 78%, 57%, 1);
-  background-color: transparent;
+  border: 1px solid var(--color-border-hover);
+  border-radius: 12px;
+  color: var(--color-heading);
   cursor: pointer;
+  transition: box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .button:not(:disabled):hover {
-  box-shadow: 0 0 15px 5px hsla(6, 78%, 57%, 0.2);
-  background-color: hsla(6, 78%, 57%, 0.2);
+  box-shadow: var(--shadow-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: var(--color-accent);
 }
 
-.button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-/* .button[data-kind="primary"] {
-  background-color: hsla(6, 78%, 57%, 1);
-}
-.button[data-kind="primary"]:hover {
-  background-color: hsla(6, 78%, 57%, 0.5);
-}
-
-.button[data-kind="secondary"] {
-  background-color: hsla(6, 78%, 57%, 0.5);
-}
-
-.button[data-kind="secondary"]:hover {
-  background-color: hsla(6, 78%, 57%, 1);
-} */
-
-.button .loader-item {
-  background-color: white;
-}
+.button:disabled { opacity: 0.5; cursor: default; }
+.button .loader-item { background-color: var(--color-heading); }

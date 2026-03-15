@@ -205,13 +205,6 @@ const convert = async () => {
     }
     return;
   }
-  
-  // Fallback to local conversion
-  if (inputFile.value.table.data) {
-    store.convertTableToXml();
-  } else if (inputFile.value.xml.data) {
-    store.convertXmlToTable();
-  }
 };
 
 const showSourceTable = computed(

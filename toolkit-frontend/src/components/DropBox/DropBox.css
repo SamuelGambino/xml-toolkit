@@ -3,7 +3,7 @@
   max-width: 240px;
   padding: 0.4rem 0.6rem;
   font-size: 0.9rem;
-  border: 1px solid hsla(6, 78%, 57%, 0.5);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 50%, transparent);
   border-radius: 4px;
   background: var(--color-background);
   color: inherit;
