@@ -119,8 +119,6 @@ const rowClass = (columnIndex: number): string[] => {
   const classes: string[] = []
   const type = props.modelValue[columnIndex]
 
-  if (!pairsState.value.hasUnpairedUnit) return classes
-
   if (type === PRODUCT_CHARACTERISTIC) {
     classes.push('column-mapping__row--characteristic')
     classes.push(
