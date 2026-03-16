@@ -19,10 +19,10 @@ const emit = defineEmits<{
 const PRODUCT_CHARACTERISTIC = 'ProductParameterCharacteristic'
 const PRODUCT_CHARACTERISTIC_UNIT = 'ProductParameterCharacteristicUnit'
 
-const emptyOption = { value: '', labelRu: 'Не выбрано', label: 'Не выбрано' }
+const emptyOption = { value: '', labelRu: 'Не выбрано', label: 'Не выбрано', filter: undefined }
 
 const options = computed(() =>
-  [emptyOption, ...props.supportedTypes].map((opt) => ({ value: opt.value, label: opt.labelRu ?? opt.label }))
+  [emptyOption, ...props.supportedTypes].map((opt) => ({ value: opt.value, label: opt.labelRu ?? opt.label, filter: opt?.filter }))
 )
 
 const rowOrder = ref<number[]>([])

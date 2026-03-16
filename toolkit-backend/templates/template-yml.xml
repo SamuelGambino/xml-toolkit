@@ -31,6 +31,7 @@
         <currencyId>RUR</currencyId>
         <categoryId>3</categoryId>
         <picture>https://vcus-i-cvet.ru</picture>
+        <count>10</count> <!-- Количество товара в наличии -->
         <store>true</store> <!-- Можно ли забрать самовывозом -->
         <pickup>true</pickup>
         <delivery>true</delivery>
@@ -57,8 +58,8 @@
         <country_of_origin>Россия</country_of_origin>
       </offer>
 
-      <!-- Пример 2: Напиток с выбором объема (через разные offer id или параметры) -->
-      <offer id="2005" available="true">
+      <!-- Пример 2: Один товар с разным объемом (или другими разными характеристиками) -->
+      <offer id="210010" group_id="20001" available="true"> <!-- id - id параметра, group_id - id товара из универсального объекта -->
         <url>https://vcus-i-cvet.ru</url>
         <price>450</price>
         <currencyId>RUR</currencyId>
@@ -67,6 +68,18 @@
         <description>Освежающий напиток собственного приготовления с ежевикой и мятой.</description>
         <param name="Объем" unit="мл">500</param>
         <param name="Тип упаковки">Стеклянная бутылка</param>
+        <expiry>P1D</expiry> <!-- Срок годности: 1 день -->
+      </offer>
+
+      <offer id="210011" group_id="20001" available="true"> <!-- id - id параметра, group_id - id товара из универсального объекта -->
+        <url>https://vcus-i-cvet.ru</url>
+        <price>800</price>
+        <currencyId>RUR</currencyId>
+        <categoryId>4</categoryId>
+        <name>Лимонад Лесные Ягоды</name>
+        <description>Освежающий напиток собственного приготовления с ежевикой и мятой.</description>
+        <param name="Объем" unit="мл">900</param>
+        <param name="Тип упаковки">Пластиковая бутылка</param>
         <expiry>P1D</expiry> <!-- Срок годности: 1 день -->
       </offer>
     </offers>

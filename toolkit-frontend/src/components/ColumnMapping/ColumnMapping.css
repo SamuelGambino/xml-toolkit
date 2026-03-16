@@ -108,3 +108,77 @@
 .column-mapping__drag-handle:active {
   cursor: grabbing;
 }
+
+.column-mapping__wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.column-mapping__content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.column-mapping__filter {
+  display: flex;
+  width: fit-content;
+  border: none;
+  padding: 0;
+  gap: 1rem;
+}
+
+.column-mapping__filter legend {
+  color: var(--color-muted);
+  padding: 0;
+}
+
+.column-mapping__filter-item {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.column-mapping__filter-item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.column-mapping__filter-item label {
+  position: relative;
+  padding-left: 22px;
+  cursor: pointer;
+}
+
+/* внешний квадрат */
+.column-mapping__filter-item label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--color-accent);
+  transform: translateY(-50%);
+  box-sizing: border-box;
+}
+
+/* внутренний квадрат */
+.column-mapping__filter-item label::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  background: var(--color-accent);
+  transform: translateY(-50%) scale(0);
+  transition: transform 0.15s ease;
+}
+
+/* состояние checked */
+.column-mapping__filter-item input:checked + label::after {
+  transform: translateY(-50%) scale(1);
+}

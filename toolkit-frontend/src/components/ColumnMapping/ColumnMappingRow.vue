@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import DropBox from '@/components/DropBox/DropBox.vue'
+
+type TSelectedFilter = "none" | "mod" | "product" | "category";
 
 const props = defineProps<{
   column: { index: number; name: string }
   mappedType: string
-  options: { value: string; label: string }[]
+  options: { value: string; label: string; filter?: "mod" | "product" | "category" }[]
   className?: string
   isDragging?: boolean
   isDropBefore?: boolean
@@ -19,6 +21,20 @@ const emit = defineEmits<{
   (e: 'dragover', payload: { targetIndex: number; clientY: number; rect: DOMRect }): void
   (e: 'drop', payload: { targetIndex: number; clientY: number; rect: DOMRect }): void
 }>()
+
+const selectedFilter = ref<TSelectedFilter>('none')
+
+const filteredOptions = computed(() => {
+  if (selectedFilter.value === 'none') {
+    return props.options
+  }
+
+  const temp = props.options.filter(
+    (opt) => !opt.filter || opt.filter === selectedFilter.value
+  )
+  console.log(temp);
+  return temp;
+})
 
 const dynamicClasses = computed(() => [
   props.className,
@@ -53,24 +69,36 @@ const handleDrop = (event: DragEvent) => {
 </script>
 
 <template>
-  <li
-    class="column-mapping__row"
-    :class="dynamicClasses"
-    @dragover="handleDragOver"
-    @drop="handleDrop"
-  >
-    <button
-      type="button"
-      class="column-mapping__drag-handle"
-      draggable="true"
-      aria-label="Перетащить строку"
-      @dragstart="emit('dragstart', column.index)"
-      @dragend="emit('dragend')"
-    >
+  <li class="column-mapping__row" :class="dynamicClasses" @dragover="handleDragOver" @drop="handleDrop">
+    <button type="button" class="column-mapping__drag-handle" draggable="true" aria-label="Перетащить строку"
+      @dragstart="emit('dragstart', column.index)" @dragend="emit('dragend')">
       ⋮⋮
     </button>
 
-    <span class="column-mapping__name">{{ column.name }}</span>
-    <DropBox :options="options" :modelValue="mappedType" @update:modelValue="emit('update:mappedType', $event)" />
+    <div class="column-mapping__wrapper">
+      <div class="column-mapping__content">
+        <span class="column-mapping__name">{{ column.name }}</span>
+        <DropBox :options="filteredOptions" :modelValue="mappedType"
+          @update:modelValue="emit('update:mappedType', $event)" />
+      </div>
+
+      <fieldset class="column-mapping__filter">
+        <legend>Фильтр списка:</legend>
+        <div class="column-mapping__filter-item">
+          <input type="radio" id="category" value="category" v-model="selectedFilter">
+          <label for="category">Категории</label>
+        </div>
+
+        <div class="column-mapping__filter-item">
+          <input type="radio" id="product" value="product" v-model="selectedFilter">
+          <label for="product">Товары</label>
+        </div>
+
+        <div class="column-mapping__filter-item">
+          <input type="radio" id="mod" value="mod" v-model="selectedFilter">
+          <label for="mod">Модификаторы</label>
+        </div>
+      </fieldset>
+    </div>
   </li>
 </template>

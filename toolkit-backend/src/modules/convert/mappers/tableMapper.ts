@@ -92,7 +92,6 @@ export class TableMapper {
   ): RowTypeData {
     const categoryName = this.getValueByType(row, mappings, ColumnType.CATEGORY_NAME);
     const categoryId = this.getValueByType(row, mappings, ColumnType.CATEGORY_ID);
-    const categoryParent = this.getValueByType(row, mappings, ColumnType.CATEGORY_PARENT);
     const subcategoryName = this.getValueByType(row, mappings, ColumnType.SUBCATEGORY_NAME);
     const subcategoryId = this.getValueByType(row, mappings, ColumnType.SUBCATEGORY_ID);
 
@@ -113,7 +112,6 @@ export class TableMapper {
       rowData.category = {
         id: categoryId,
         name: categoryName,
-        parentId: categoryParent,
       };
     }
 

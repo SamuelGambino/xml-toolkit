@@ -26,7 +26,6 @@ export enum ColumnType {
   MODIFIER_PRICE = 'ModifierPrice',
   SUBCATEGORY_NAME = 'SubcategoryName',
   SUBCATEGORY_ID = 'SubcategoryId',
-  CATEGORY_PARENT = 'CategoryParent',
   PRODUCT_PARAMETER_ID = 'ProductParameterId',
   PRODUCT_PARAMETER_CHARACTERISTIC = 'ProductParameterCharacteristic',
   PRODUCT_PARAMETER_CHARACTERISTIC_UNIT = 'ProductParameterCharacteristicUnit',
@@ -69,6 +68,7 @@ export interface ConfigResponseDto {
     label: string;
     labelRu?: string;
     description?: string;
+    filter?: "category" | "product" | "mod";
   }[];
   /** Output formats for "Convert to" (e.g. table, xml). Frontend excludes current format. */
   supportedOutputFormats: {
