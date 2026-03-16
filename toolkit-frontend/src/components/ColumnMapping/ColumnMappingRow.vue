@@ -24,17 +24,26 @@ const emit = defineEmits<{
 
 const selectedFilter = ref<TSelectedFilter>('none')
 
+const filterOptions: { value: TSelectedFilter; label: string }[] = [
+  { value: 'none', label: 'Все' },
+  { value: 'category', label: 'Категории' },
+  { value: 'product', label: 'Товары' },
+  { value: 'mod', label: 'Модификаторы' },
+]
+
+
 const filteredOptions = computed(() => {
   if (selectedFilter.value === 'none') {
     return props.options
   }
 
-  const temp = props.options.filter(
+  return props.options.filter(
     (opt) => !opt.filter || opt.filter === selectedFilter.value
   )
-  console.log(temp);
-  return temp;
-})
+});
+
+const filterName = computed(() => `mapping-filter-${props.column.index}`)
+const filterId = (value: TSelectedFilter) => `${filterName.value}-${value}`
 
 const dynamicClasses = computed(() => [
   props.className,
@@ -84,19 +93,12 @@ const handleDrop = (event: DragEvent) => {
 
       <fieldset class="column-mapping__filter">
         <legend>Фильтр списка:</legend>
-        <div class="column-mapping__filter-item">
-          <input type="radio" id="category" value="category" v-model="selectedFilter">
-          <label for="category">Категории</label>
-        </div>
-
-        <div class="column-mapping__filter-item">
-          <input type="radio" id="product" value="product" v-model="selectedFilter">
-          <label for="product">Товары</label>
-        </div>
-
-        <div class="column-mapping__filter-item">
-          <input type="radio" id="mod" value="mod" v-model="selectedFilter">
-          <label for="mod">Модификаторы</label>
+        <div class="column-mapping__filter-options">
+          <div class="column-mapping__filter-item" v-for="option in filterOptions" :key="option.value">
+            <input type="radio" :id="filterId(option.value)" :name="filterName" :value="option.value"
+              v-model="selectedFilter">
+            <label :for="filterId(option.value)">{{ option.label }}</label>
+          </div>
         </div>
       </fieldset>
     </div>

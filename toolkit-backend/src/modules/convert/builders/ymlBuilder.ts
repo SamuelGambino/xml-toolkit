@@ -10,28 +10,43 @@ const formatYmlDate = (date: Date): string => {
 export class YmlBuilder {
   static build(data: UniversalProductData): string {
     const offers = data.categories.flatMap((category) =>
-      category.products.map((product) => {
-        const firstParameter = product.parameters[0];
-        const params = product.parameters.flatMap((parameter) =>
-          (parameter.characteristics ?? []).map((characteristic) => ({
+      category.products.flatMap((product) => {
+        if (!product.parameters.length) {
+          return {
+            $: { id: product.id, available: 'true' },
+            url: product.link ?? '',
+            price: 0,
+            categoryId: category.id,
+            picture: product.image ?? '',
+            name: product.name,
+            description: product.description ?? '',
+          };
+        }
+
+        return product.parameters.map((parameter) => {
+          const params = (parameter.characteristics ?? []).map((characteristic) => ({
             $: {
               name: characteristic.name,
               ...(characteristic.unit ? { unit: characteristic.unit } : {}),
             },
             _: String(characteristic.value ?? ''),
-          }))
-        );
+          }));
 
-        return {
-          $: { id: product.id, available: 'true' },
-          url: product.link ?? '',
-          price: firstParameter?.price ?? 0,
-          categoryId: category.id,
-          picture: product.image ?? '',
-          name: product.name,
-          description: product.description ?? '',
-          ...(params.length > 0 ? { param: params } : {}),
-        };
+          return {
+            $: {
+              id: parameter.id || product.id,
+              group_id: product.id,
+              available: 'true',
+            },
+            url: product.link ?? '',
+            price: parameter.price ?? 0,
+            categoryId: category.id,
+            picture: product.image ?? '',
+            name: product.name,
+            description: product.description ?? '',
+            ...(params.length > 0 ? { param: params } : {}),
+          };
+        });
       })
     );
 
