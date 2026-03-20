@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fs_catalog date="2021-01-20 14:00">
+    <shop>
+        <!-- описание групп модификаторов -->
+        <modifiers_groups>
+            <!-- группа модификаторов -->
+            <!-- required:true - обязательный выбор ингредиентов -->
+            <modifiers_group id="1" required="true">
+                <!-- Название -->
+                <name>Тесто</name>
+                <!-- Тип, default значение - all_unlimited -->
+                <type>one_one</type>
+                <!-- Минимальное количество -->
+                <minimum>1</minimum>
+                <!-- Максимальное количество -->
+                <maximum>1</maximum>
+                                <!-- Порядковый номер отображения (необязательный) -->
+                <sort>1</sort>
+            </modifiers_group>
+            <modifiers_group id="2" required="true">
+                <name>Соус</name>
+                <type>one_one</type>
+                <minimum>1</minimum>
+                <maximum>1</maximum>
+                                <sort>2</sort>
+            </modifiers_group>
+            <modifiers_group id="3">
+                <name>Дополнительно</name>
+                <type>all_unlimited</type>
+                <minimum>0</minimum>
+                <maximum>10</maximum>
+            </modifiers_group>
+        </modifiers_groups>
+        <!-- описание модификаторов -->
+        <modifiers>
+            <modifier id="1">
+                <!-- название -->
+                <name>Традиционное тесто</name>
+                <!-- стоимость -->
+                <price>0.00</price>
+                <!-- артикул для связи с внешним сайтом, если поле отсутствует будет использоваться атрибут id -->
+                <vendor_code>1</vendor_code>
+                <!-- белки -->
+                <proteins>123</proteins>
+                <!-- жиры -->
+                <fats>123</fats>
+                <!-- углеводы -->
+                <carbohydrates>123</carbohydrates>
+                <!-- количество калорий -->
+                <calories>123</calories>
+                <!-- идентификатор группы модификаторов -->
+                <modifiers_group_id>1</modifiers_group_id>
+            </modifier>
+            <modifier id="2">
+                <name>Тонкое тесто</name>
+                <price>0.00</price>
+                <modifiers_group_id>1</modifiers_group_id>
+                <vendor_code>2</vendor_code>
+                  <sort>2</sort>
+            </modifier>
+            <modifier id="3">
+                <name>Острый</name>
+                <price>0.00</price>
+                <modifiers_group_id>2</modifiers_group_id>
+            </modifier>
+            <modifier id="4">
+                <name>Томатный</name>
+                <price>0.00</price>
+                <modifiers_group_id>2</modifiers_group_id>
+            </modifier>
+            <modifier id="5">
+                <name>Сливочный</name>
+                <price>0.00</price>
+                <modifiers_group_id>2</modifiers_group_id>
+            </modifier>
+            <modifier id="6">
+                <name>Джем брусничный</name>
+                <price>0.00</price>
+                <modifiers_group_id>3</modifiers_group_id>
+            </modifier>
+            <modifier id="7">
+                <name>Сметана</name>
+                <price>0.00</price>
+                <modifiers_group_id>3</modifiers_group_id>
+            </modifier>
+        </modifiers>
+        <!-- список категорий -->
+        <categories>
+            <!-- parent_id: id родительской категории -->
+            <category id="1">Пицца</category>
+            <category id="2">Завтраки</category>
+            <category id="3" parent_id="2">Десерты</category>
+            <category id="4">Напитки</category>
+        </categories>
+        <!-- описание меню  -->
+        <items>
+            <!-- описание товара -->
+            <!-- id: идентификатор позиции, должен быть уникальным, числовым -->
+            <item id="1000">
+                <!-- название -->
+                <name>Пицца «Итальянская»</name>
+                <!-- идентификатор категории -->
+                <category_id>1</category_id>
+                <!-- описание -->
+                <description>Пепперони, салями, орегано, шампиньоны, маслины, моцарелла.</description>
+                <!-- список групп модификаторов по id -->
+                <modifiers_groups_ids>
+                    <modifiers_group_id>1</modifiers_group_id>
+                    <modifiers_group_id>2</modifiers_group_id>
+                </modifiers_groups_ids>
+                <!-- ссылка на изображение -->
+                <images>
+                    <large>https://ru.foodsoul.pro/uploads/branches/5389/images/items/large/9302ef6317e3d18e10cf1ea0ee4a4dd5.jpg</large>
+                </images>
+                <!-- выбор вариантов размера -->
+                <parameters>
+                    <!-- id параметра -->
+                    <parameter id="1">
+                        <!-- цена -->
+                        <price>375.00</price>
+                        <!-- описание параметра -->
+                        <description>23 см.</description>
+                        <!-- белки -->
+                        <proteins>123</proteins>
+                        <!-- жиры -->
+                        <fats>123</fats>
+                        <!-- углеводы -->
+                        <carbohydrates>123</carbohydrates>
+                        <!-- количество калорий -->
+                        <calories>123</calories>
+                        <!-- список групп модификаторов по id, опционально для каждого варианта -->
+                        <modifiers_groups_ids>
+                            <modifiers_group_id>1</modifiers_group_id>
+                            <modifiers_group_id>2</modifiers_group_id>
+                        </modifiers_groups_ids>
+                    </parameter>
+                    <parameter id="2">
+                        <price>565.00</price>
+                        <description>30 см.</description>
+                        <vendor_code>2020</vendor_code>
+                        <sort>2</sort>
+                    </parameter>
+                    <parameter id="3">
+                        <price>675.00</price>
+                        <description>35 см.</description>
+                    </parameter>
+                </parameters>
+            </item>
+            <item id="10001">
+                <name>Блинчики с творогом и изюмом</name>
+                <category_id>3</category_id>
+                <description>Блинчики с начинкой из творога и изюма. Вес: 200 г.</description>
+                <modifiers_groups_ids>
+                    <modifiers_group_id>3</modifiers_group_id>
+                </modifiers_groups_ids>
+                <labels_ids>
+                    <label_id>4713</label_id>
+                    <label_id>4714</label_id>
+                </labels_ids>
+                <images>
+                    <large>https://ru.foodsoul.pro/uploads/branches/5389/images/items/large/bcfb1c6374013216af109a092ef2ad29.jpg</large>
+                </images>
+                <parameters>
+                    <parameter id="6337974">
+                        <price>150.00</price>
+                        <description>2 шт.</description>
+                    </parameter>
+                </parameters>
+            </item>
+        </items>
+    </shop>
+</fs_catalog>

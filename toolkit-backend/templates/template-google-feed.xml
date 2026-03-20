@@ -12,9 +12,11 @@
       <g:link>https://rest-example.com</g:link>
       <g:image_link>https://rest-example.com/image.jpg</g:image_link>
       <g:price>450.00 RUB</g:price> <!-- Цена товара с валютой через пробел -->
-      <g:availability>in_stock</g:availability> <!-- Default значение -->
+      <g:availability>in_stock</g:availability> <!-- Default значение, так же out_of_stock (нет в наличии), preorder (предзаказ) -->
       <g:product_type>Пицца > Классика</g:product_type> <!-- Для вложенности категорий используется " > " -->
       <g:size>30 см</g:size> <!-- Вес параметра -->
+      <g:brand>Ресторан "Вкусный код"</g:brand> <!-- Бренд товара, в качестве default занчения используется название предприятия -->
+      <g:condition>new</g:condition> <!-- состояние товара, default значение - new, так же есть refurbished, used -->
     </item>
 
     <item>
