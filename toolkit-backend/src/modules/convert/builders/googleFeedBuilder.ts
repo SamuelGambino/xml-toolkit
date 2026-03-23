@@ -4,18 +4,31 @@ import { UniversalProductData } from '../domain/models';
 export class GoogleFeedBuilder {
   static build(data: UniversalProductData): string {
     const items = data.categories.flatMap((category) =>
-      category.products.map((product) => {
-        const param = product.parameters[0];
-        return {
-          'g:id': product.id,
+      category.products.flatMap((product) => {
+        if (!product.parameters.length) {
+          return {
+            'g:id': product.id,
+            'g:title': product.name,
+            'g:description': product.description ?? '',
+            'g:link': product.link ?? '',
+            'g:image_link': product.image ?? '',
+            'g:price': '0 RUB',
+            'g:availability': 'in_stock',
+            'g:product_type': this.buildProductType(category.id, data),
+          };
+        }
+
+        return product.parameters.map((parameter) => ({
+          'g:id': parameter.id || product.id,
+          'g:item_group_id': product.id,
           'g:title': product.name,
           'g:description': product.description ?? '',
           'g:link': product.link ?? '',
           'g:image_link': product.image ?? '',
-          'g:price': `${param?.price ?? 0} RUB`,
+          'g:price': `${parameter.price ?? 0} RUB`,
           'g:availability': 'in_stock',
           'g:product_type': this.buildProductType(category.id, data),
-        };
+        }));
       })
     );
 
