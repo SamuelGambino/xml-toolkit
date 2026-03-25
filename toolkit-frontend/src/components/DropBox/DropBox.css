@@ -1,11 +1,111 @@
 .drop-box {
+  position: relative;
   flex: 1;
-  max-width: 240px;
-  padding: 0.4rem 0.6rem;
-  font-size: 0.9rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 50%, transparent);
-  border-radius: 4px;
-  background: var(--color-background);
-  color: inherit;
+  min-width: 220px;
+  max-width: 280px;
+}
+
+.drop-box__trigger {
+  width: 100%;
+  min-height: 38px;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.drop-box__trigger:hover,
+.drop-box__trigger--open {
+  border-color: var(--color-border-hover);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 14%, transparent);
+  background: var(--color-surface-elevated);
+}
+
+.drop-box__selected {
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.drop-box__arrow {
+  color: var(--color-muted);
+  transition: transform 0.2s ease;
+}
+
+.drop-box__trigger--open .drop-box__arrow {
+  transform: rotate(180deg);
+}
+
+.drop-box__panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 15;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-background) 92%, black);
+  box-shadow: var(--shadow-soft);
+  padding: 0.45rem;
+}
+
+.drop-box__search {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  min-height: 34px;
+  padding: 0.35rem 0.55rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  margin-bottom: 0.45rem;
+}
+
+.drop-box__search:focus-visible {
+  outline: none;
+  border-color: var(--color-border-hover);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 14%, transparent);
+}
+
+.drop-box__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 230px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.drop-box__option {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+}
+
+.drop-box__option:hover {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+
+.drop-box__option--selected {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  color: var(--color-heading);
+}
+
+.drop-box__empty {
+  color: var(--color-muted);
+  padding: 0.45rem 0.5rem;
+  font-size: 0.85rem;
 }
