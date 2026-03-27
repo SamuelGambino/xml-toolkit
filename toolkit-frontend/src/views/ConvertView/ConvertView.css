@@ -37,3 +37,49 @@
 }
 
 .convert__error { color: #ff7e7e; margin: 0; font-size: 0.9rem; }
+
+.convert__filter-options {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+
+}
+
+.convert__filter-item {
+  position: relative;
+}
+
+.convert__filter-item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.convert__filter-item label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.convert__filter-item label:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-text);
+}
+
+.convert__filter-item input:checked + label {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  color: var(--color-text);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 14%, transparent);
+}

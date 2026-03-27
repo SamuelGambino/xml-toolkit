@@ -33,7 +33,7 @@ export interface IConfigColumnType {
   label: string;
   labelRu?: string;
   description?: string;
-  filter?: "category" | "product" | "mod";
+  filter?: string[];
 }
 
 export interface IConfigOutputFormat {

@@ -68,7 +68,7 @@ export interface ConfigResponseDto {
     label: string;
     labelRu?: string;
     description?: string;
-    filter?: "category" | "product" | "mod";
+    filter?: string[];
   }[];
   /** Output formats for "Convert to" (e.g. table, xml). Frontend excludes current format. */
   supportedOutputFormats: {

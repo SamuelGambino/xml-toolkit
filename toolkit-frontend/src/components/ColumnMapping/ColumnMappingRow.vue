@@ -7,7 +7,7 @@ type TSelectedFilter = "none" | "mod" | "product" | "category";
 const props = defineProps<{
   column: { index: number; name: string }
   mappedType: string
-  options: { value: string; label: string; filter?: "mod" | "product" | "category" }[]
+  options: { value: string; label: string; filter?: string[] }[]
   className?: string
   isDragging?: boolean
   isDropBefore?: boolean
@@ -31,14 +31,13 @@ const filterOptions: { value: TSelectedFilter; label: string }[] = [
   { value: 'mod', label: 'Модификаторы' },
 ]
 
-
 const filteredOptions = computed(() => {
   if (selectedFilter.value === 'none') {
     return props.options
   }
 
   return props.options.filter(
-    (opt) => !opt.filter || opt.filter === selectedFilter.value
+    (opt) => !opt.filter || opt.filter.includes(selectedFilter.value)
   )
 });
 

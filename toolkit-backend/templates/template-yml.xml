@@ -2,11 +2,16 @@
 <yml_catalog date="2023-10-27 15:30">
   <shop>
     <!-- Основная информация о ресторане -->
-    <name>Гастро-Паб "Вкус и Цвет"</name>
-    <company>ООО "Ресторанные Технологии"</company>
-    <url>https://vcus-i-cvet.ru</url>
+    <name>BestSeller</name>
+    <company>Tne Best inc.</company>
+    <url>http://best.seller.ru</url>
+    <platform>uCoz</platform>
+    <version>1.0</version>
+    <agency>Технологичные решения</agency>
+    <email>example-email@gmail.com</email>
+
     <currencies>
-      <currency id="RUR" rate="1"/>
+      <currency id="RUR" rate="1" />
     </currencies>
 
     <!-- Структура меню -->
@@ -17,27 +22,66 @@
       <category id="4">Напитки</category>
     </categories>
 
-    <!-- Условия доставки (опционально) -->
+    <!-- Условия доставки для всех товаров (опционально) -->
     <delivery-options>
-      <option cost="300" days="0" order-before="22"/>
+      <option cost="123" days="4" order-before="18" />
+      <!-- Здесь указано, что покупатель может оформить доставку в течение 4 дней. Если он оформляет
+      заказ после 18:00, срок начнет отсчитываться со следующего дня. -->
     </delivery-options>
 
+    <!-- Условия самовывоза (опционально) -->
+    <pickup-options>
+      <option cost="123" days="2" order-before="18" />
+      <!-- Здесь указано, что товар приедет на пункт выдачи в течение двух дней. Если покупатель
+      оформляет заказ с самовывозом после 18:00, срок начнет отсчитываться со следующего дня. -->
+    </pickup-options>
+
+    <!-- Перед массивом offers может быть указан параметр <adult>true</adult>, означающий что все
+    товары в этом списке 18+ -->
+    <adult>false</adult>
     <offers>
-      <!-- Пример 1: Сложное блюдо с параметрами (КБЖУ) -->
+      <!-- Пример товара -->
+      <!-- Может быть указан тип товара: 
+      Атрибут type элемента <offer>, например <offer type="audiobook">, он может иметь значения:
+       audiobook — аудиокнига;
+       book — книга или цифровая книга;
+       medicine — лекарство;
+       artist.title — музыкальная или видеопродукция;
+       on.demand — товар под заказ. 
+       Элемент <available> указывается как атрибут элемента <offer>. true — товар в наличии, false —
+      отсутствует. -->
       <offer id="1001" available="true">
-        <url>https://vcus-i-cvet.ru</url>
-        <price>2450</price>
-        <oldprice>2800</oldprice> <!-- Цена до скидки -->
-        <currencyId>RUR</currencyId>
+        <name>Стейк Рибай с перечным соусом</name> <!-- Имя товара, тега может не быть только если
+        есть не пустые теги typePrefix, vendor и model -->
+        <!-- Пример, другого товара -->
+        <typePrefix>Принтер</typePrefix> <!-- Тип / категория товара -->
+        <vendor>НP</vendor> <!-- Производитель или бренд -->
+        <model>Deskjet D2663</model> <!-- Модель и важные параметры -->
+
+        <vendorCode>VNDR-0005A, VNDR-0005B</vendorCode> <!-- Код товара, который ему присвоил
+        производитель, если
+        артикулов несколько, можно указать их через запятую -->
         <categoryId>3</categoryId>
-        <picture>https://vcus-i-cvet.ru</picture>
-        <count>10</count> <!-- Количество товара в наличии -->
-        <store>true</store> <!-- Можно ли забрать самовывозом -->
-        <pickup>true</pickup>
-        <delivery>true</delivery>
-        
-        <name>Стейк Рибай с перечным соусом</name>
-        <vendor>Black Angus</vendor>
+        <cargo-types>CIS_REQUIRED</cargo-types> <!-- Параметр для кода маркировки товара, к которому
+        не обязательна маркировка (опц.) -->
+        <barcode>4601234567890</barcode> <!-- Штрихкод -->
+
+        <sales_notes>Необходима предоплата.</sales_notes> <!-- Информация о заказе -->
+
+        <!-- Параметры медиа -->
+        <picture>https://best.seller.ru/img/device12346-front.jpg</picture>
+        <picture>https://best.seller.ru/img/device12346-back.jpg</picture> <!-- может быть несколько
+        фото -->
+        <video>https://disk.yandex.ru/i/fUs4sweebCgjq_ytMN</video>
+        <video>https://disk.yandex.ru/i/kEb8svrewPnaq_fnZA</video>
+        <video>https://disk.yandex.ru/i/mOx2zqdbfLoph_pwGS</video> <!-- может быть несколько видео -->
+        <url>https://vcus-i-cvet.ru</url> <!-- Ссылка на товар может быть только одна -->
+        <manual title="Manual 1">https://ya.ru/man.pdf</manual>
+        <manual title="Manual 2">https://ya.ru/man.jpg </manual> <!-- Инструкции по эксплуатации,
+        схемы сборки и т. д. 
+        Элемент <manual> с атрибутом <title> внутри элемента <offer>, где <title> — это название
+        инструкции. -->
+
         <description>
           <![CDATA[
           Сочный стейк из мраморной говядины зернового откорма. 
@@ -45,21 +89,165 @@
           Степень прожарки по умолчанию: Medium.
           ]]>
         </description>
+        <box-count>2</box-count> <!-- Количество грузовых мест -->
 
-        <!-- Характеристики блюда -->
+        <downloadable>true</downloadable> <!-- Параметр, устанавливаемый для цифровых товаров,
+        которые просто скачиваются -->
+
+        <!-- Ценовые параметры -->
+        <price>2450</price>
+        <oldprice>2800</oldprice> <!-- Старая цена -->
+        <purchase_price>2000</purchase_price> <!-- Себестоимость -->
+        <additional_expenses>75</additional_expenses> <!-- Дополнительные расходы на товар. Например,
+        на доставку или упаковку -->
+
+        <archived>true</archived> <!-- Поле позволяет поместить товар в архив, скрывая его с витрины
+        во всех магазинах, и восстановить из архива. Значение true, если нужно поместить товар в архив, или
+        false, если нужно восстановить товар из архива. -->
+        <count>10</count> <!-- Общее количество товара, доступное для продажи -->
+        <disabled>true</disabled> <!-- Поле позволяет приостановить продажу товара в одном магазине.
+        Значение true, если нужно приостановить продажу, false, если нужно вернуть товар в продажу. -->
+
+        <!-- Документы/сертификаты товара -->
+        <certificate>6241421</certificate> <!-- Номер документа на товар: сертификата, декларации
+        соответствия и т. п. -->
+        <tn-ved-codes> <!-- Элемент <tn-ved-codes> внутри элемента <offer>. Внутри <tn-ved-codes>
+          может быть сколько угодно элементов <tn-ved-code>, каждый из которых содержит один из
+          кодов товара. Для товаров, к которым обязательна маркировка -->
+          <tn-ved-code>8517610008</tn-ved-code>
+        </tn-ved-codes>
+        <ctru_code>20.41.32.121-00000006</ctru_code> <!-- Код КТРУ используется государственными и
+        муниципальными заказчиками для унификации наименований и описаний объектов закупки -->
+        <vat>VAT_22</vat> <!-- Значение ставки НДС для товара -->
+
+        <!-- Срок службы -->
+        <service-life-days>P2Y2M10D</service-life-days> <!-- В течение срока службы товар должен
+        исправно выполнять свою функцию 
+        Продолжительность указывается согласно ISO 8601, то есть в виде строчки, начинающейся буквой P:
+        P1Y — 1 год;
+        P1Y2M — 1 год и 2 месяца;
+        P15D — 15 дней;
+        P2Y10D — 2 года, 10 дней;
+        P2Y6M10D — 2 года, 6 месяцев и 10 дней. -->
+        <comment-life-days>Использовать при температуре не ниже -10 градусов.</comment-life-days> <!--
+        Поле предназначено для описаний условий использования -->
+
+        <!-- Срок годности -->
+        <period-of-validity-days>P1Y</period-of-validity-days> <!-- Период с момента изготовления, по
+        прошествии которого товар становится непригоден
+        Продолжительность указывается согласно ISO 8601, то есть в виде строчки, начинающейся буквой P:
+        P1Y — 1 год;
+        P1Y6M — 1 год и 6 месяцев;
+        P15D — 15 дней. -->
+        <comment-validity-days>Хранить в сухом помещении.</comment-validity-days> <!-- Поле
+        предназначено для описаний условий хранения -->
+
+        <!-- Гарантийный срок -->
+        <manufacturer_warranty>true</manufacturer_warranty> <!-- Наличие гарантии: 
+        да, 1, +, true — товар имеет официальную гарантию 
+        нет, 0, −, false — товар не имеет официальной гарантии -->
+        <warranty-days>P2Y2M10D</warranty-days> <!-- В течение какого времени можно бесплатно
+        заменить или починить товар 
+        Продолжительность указывается согласно ISO 8601, то есть в виде строчки, начинающейся буквой P -->
+        <comment-warranty>Гарантия на аккумулятор — 6 месяцев.</comment-warranty> <!-- Поле
+        предназначено для описания особенностей гарантийных условий. Не длиннее 250 знаков и без
+        спецсимволов. -->
+
+        <!-- Типы уцененных товаров -->
+        <condition type="preowned"> <!-- Элемент <condition> внутри элемента <offer>. Тип задается в
+          атрибуте type. Возможные значения:
+        preowned — бывший в употреблении товар, раньше принадлежал другому человеку.
+        showcasesample — витринный образец.
+        reduction — уцененный товар, есть дефекты.
+        renovated — восстановленный товар.
+        refurbished — повторная продажа товара. Для одежды и аксессуаров указывайте только это значение. Не
+          используйте для других категорий. -->
+          <quality>excellent</quality> <!-- Элемент <quality> внутри элемента <condition>. Возможные
+          значения:
+          perfect — как новый, товар в идеальном состоянии.
+          excellent — отличный, следы использования или дефекты
+          едва заметные.
+          good — хороший, есть заметные следы использования или
+          дефекты. -->
+          <reason>
+            <![CDATA[
+              <ul>
+              <li>Описание: телефон как новый, полностью в рабочем состоянии, есть незначительные следы эксплуатации — небольшие потертости по центру задней крышки.</li>
+              <li>Комплект: полный комплект с инструкцией, зарядкой и наушниками.</li>
+              <li>Упаковка: есть две заметных царапины на заводской упаковке, замят уголок коробки.</li>
+              <li>Гарантия: 90 дней.</li>
+              </ul>
+            ]]></reason> <!-- Описание состояния товара -->
+        </condition>
+
+        <!-- Любые другие характеристики товара могут передаваться в теге param -->
         <param name="Вес" unit="г">350</param>
         <param name="Белки" unit="г">22</param>
         <param name="Жиры" unit="г">38</param>
         <param name="Углеводы" unit="г">2</param>
         <param name="Калорийность" unit="ккал">438</param>
         <param name="Острота">Средняя</param>
-        
-        <!-- Страна происхождения ингредиентов -->
+
+        <!-- Собственные метки товара пользователя -->
+        <set-ids>apple, до 500 рублей</set-ids>
+
+        <!-- Страна происхождения ингредиентов / производства страна должна быть из списка стран
+        яндекс (https://yastatic.net/s3/doc-binary/src/support/market/ru/countries.xlsx) -->
         <country_of_origin>Россия</country_of_origin>
+
+        <!-- Теги возраста -->
+        <adult>false</adult> <!-- Может быть указан параметр <adult>true</adult> если этот товар 18+ -->
+        <age unit="year">6</age> <!-- Может быть указан параметр <age unit="year">6</age> описывающий
+        с какого возраста
+        предназначен товар. Элемент <age> внутри элемента <offer>. Единицы измерения определяет
+        атрибут unit: unit="year" — годы, unit="month" — месяцы. -->
+
+        <currencyId>RUR</currencyId> <!-- Код валюты. RUR, RUB, USD, EUR, UAH, KZT, BYN, GBP, TRY,
+        ALL, AFN, ARS, AWG, AUD, AZN, BBD, BZD, BMD, BOB, BAM, BWP, BGN, BRL, BND, KHR, CAD, KYD,
+        CLP, CNY, COP, CRC, HRK, CUP, CZK, DKK, DOP, XCD, EGP, SVC, FKP, FJD, GHS, GIP, GTQ, GYD,
+        HNL, HKD, HUF, ISK, INR, IDR, IRR, ILS, JMD, JPY, KPW, KRW, KGS, LAK, LBP, LRD, MKD, MYR,
+        MUR, MXN, MNT, MAD, MZN, NAD, NPR, ANG, NZD, NIO, NGN, NOK, OMR, PKR, PAB, PYG, PEN, PHP,
+        PLN, QAR, RON, SHP, SAR, RSD, SCR, SGD, SBD, SOS, ZAR, LKR, SEK, CHF, SRD, SYP, TWD, THB,
+        TTD, AED, UYU, UZS, VEF, VND, YER, MDL, TJS, GEL, AMD, BHD, KWD. -->
+
+        <store>true</store> <!-- Возможность купить товар в розничном магазине:
+        да, 1, +, true — товар можно купить в розничном магазине;
+        нет, 0, −, false — возможность покупки в розничном магазине отсутствует. -->
+
+        <pickup>true</pickup> <!-- Доступен ли самовывоз -->
+        <pickup-options> <!-- Сколько дней понадобится, чтобы привезти товар в пункт самовывоза -->
+          <option days="1" order-before="14" /> <!-- Атрибут days элемента <option> внутри
+          <pickup-options>. <pickup-options> может содержать до пяти <option>. -->
+        </pickup-options>
+
+        <delivery>true</delivery> <!-- Есть ли курьерская доставка для этого товара -->
+        <delivery-options> <!-- Условия доставки - <delivery-options> может содержать до пяти
+          <option> -->
+          <option days="1" order-before="14" /> <!-- Атрибут days элемента <option> внутри
+          <delivery-options>. Атрибут order-before элемента <option> внутри <delivery-options>. Атрибут
+          order-before элемента <option> внутри <pickup-options> -->
+        </delivery-options>
+
+        <min-quantity>10</min-quantity> <!-- Минимальный порог заказа -->
+        <step-quantity>2</step-quantity> <!-- Увеличение количества предметов в заказе на -->
+
+        <!-- Размеры товара/Вес товара -->
+        <size-unit>RU</size-unit> <!-- тег для размерных сеток одежды -->
+        <weight>1.2</weight> <!-- Вес товара в кг -->
+        <dimensions>20.0/15.0/10.5</dimensions> <!-- Габариты товара (длинна, ширина, высота) -->
+        <!-- Для размеров и параметров блюд -->
+        <proteins>22</proteins> <!-- количество белков -->
+        <fats>38</fats> <!-- количество жиров -->
+        <carbohydrates>2</carbohydrates> <!-- количество углеводов -->
+        <calories>438</calories> <!-- количество калорий -->
+        <composition>Говядина (толстый край), сливки 33%, зеленый перец горошком, соль, масло
+          растительное.</composition> <!-- состав блюда -->
+        <dishes_count>3</dishes_count> <!-- количество блюд в комбо наборе еды -->
       </offer>
 
       <!-- Пример 2: Один товар с разным объемом (или другими разными характеристиками) -->
-      <offer id="210010" group_id="20001" available="true"> <!-- id - id параметра, group_id - id товара из универсального объекта -->
+      <offer id="210010" group_id="20001" available="true"> <!-- id - id параметра, group_id - id
+        товара из универсального объекта -->
         <url>https://vcus-i-cvet.ru</url>
         <price>450</price>
         <currencyId>RUR</currencyId>
@@ -71,7 +259,8 @@
         <expiry>P1D</expiry> <!-- Срок годности: 1 день -->
       </offer>
 
-      <offer id="210011" group_id="20001" available="true"> <!-- id - id параметра, group_id - id товара из универсального объекта -->
+      <offer id="210011" group_id="20001" available="true"> <!-- id - id параметра, group_id - id
+        товара из универсального объекта -->
         <url>https://vcus-i-cvet.ru</url>
         <price>800</price>
         <currencyId>RUR</currencyId>

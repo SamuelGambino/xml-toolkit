@@ -18,6 +18,7 @@ import {
 import "./ConvertView.css";
 
 type TableData = (string | number | boolean | null)[][];
+type TSelectedFilter = "none" | "mod" | "product" | "category";
 
 const XML_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: "yandex", label: "Yandex" },
@@ -39,6 +40,23 @@ const convertError = ref<string | null>(null);
 const uploadError = ref<string | null>(null);
 const convertLoading = ref(false);
 const selectedOutputFormat = ref<string>("");
+const selectedFilter = ref<TSelectedFilter>('none')
+
+const filterOptions: { value: TSelectedFilter; label: string }[] = [
+  { value: 'category', label: 'Категории' },
+  { value: 'product', label: 'Товары' },
+  { value: 'mod', label: 'Модификаторы' },
+]
+
+const filteredOptions = computed(() => {
+  if (selectedFilter.value === 'none') {
+    return supportedTypes.value
+  }
+
+  return supportedTypes.value.filter(
+    (opt) => !opt.filter || opt.filter.includes(selectedFilter.value)
+  )
+});
 
 const onUpload = async (file: NormalizedFile) => {
   uploadedFile.value = file;
@@ -156,18 +174,18 @@ const canConvertViaBackend = computed(
   () =>
     Boolean(
       inputFile.value.table.data &&
-        uploadedFile.value &&
-        "file" in uploadedFile.value &&
-        uploadedFile.value.file &&
-        allColumnsMapped.value &&
-        selectedOutputFormat.value &&
-        mappingsForBackend.value.columns.length + (mappingsForBackend.value.characteristic?.length ?? 0) + new Set(Object.values(characteristicLinks.value)).size === columns.value.length
+      uploadedFile.value &&
+      "file" in uploadedFile.value &&
+      uploadedFile.value.file &&
+      allColumnsMapped.value &&
+      selectedOutputFormat.value &&
+      mappingsForBackend.value.columns.length + (mappingsForBackend.value.characteristic?.length ?? 0) + new Set(Object.values(characteristicLinks.value)).size === columns.value.length
     )
 );
 
 const convert = async () => {
   convertError.value = null;
-  
+
   // Use backend conversion if table is loaded and mappings are provided
   if (inputFile.value.table.data && canConvertViaBackend.value) {
     const file = (uploadedFile.value as NormalizedFile & { file?: File }).file;
@@ -175,7 +193,7 @@ const convert = async () => {
       convertError.value = "Файл не найден";
       return;
     }
-    
+
     convertLoading.value = true;
     try {
       const sourceType = 'table';
@@ -271,12 +289,7 @@ watch(convertToOptions, (opts) => {
 <template>
   <section class="convert">
     <div class="convert__wrapper">
-      <Upload
-        @upload="onUpload"
-        @error="onUploadError"
-        :fileName="uploadedFile?.fileName"
-        :maxSize="20"
-      />
+      <Upload @upload="onUpload" @error="onUploadError" :fileName="uploadedFile?.fileName" :maxSize="20" />
 
       <p v-if="uploadError" class="convert__error">{{ uploadError }}</p>
 
@@ -287,43 +300,34 @@ watch(convertToOptions, (opts) => {
 
       <div v-if="showSourceXml" class="convert__options">
         <label class="convert__label">Тип XML</label>
-        <DropBox
-          class="convert__drop-box"
-          :options="[{ value: '', label: 'Тип не определён' }, ...XML_TYPE_OPTIONS]"
+        <DropBox class="convert__drop-box" :options="[{ value: '', label: 'Тип не определён' }, ...XML_TYPE_OPTIONS]"
           :modelValue="(inputFile.xml.selectedType ?? '')"
-          @update:modelValue="(v: string) => store.setXmlSelectedType((v || null) as XmlType)"
-        />
+          @update:modelValue="(v: string) => store.setXmlSelectedType((v || null) as XmlType)" />
       </div>
 
       <ExportButton class="convert__button" v-if="exportSourceFile" type="upload" :file="exportSourceFile" />
     </div>
 
     <div class="convert__wrapper">
-      <Button
-        class="convert__button convert__button--convert"
-        :isDisabled="!canConvert || convertLoading"
-        :isLoading="convertLoading"
-        @click="convert"
-      >
+      <Button class="convert__button convert__button--convert" :isDisabled="!canConvert || convertLoading"
+        :isLoading="convertLoading" @click="convert">
         Конвертировать
       </Button>
 
-      <div v-if="(showSourceTable || showSourceXml) && convertToOptions.length > 0" class="convert__options">
-        <label class="convert__label">Конвертировать в</label>
-        <DropBox
-          class="convert__drop-box"
-          :options="convertToOptions"
-          v-model="selectedOutputFormat"
-        />
+      <div v-if="showSourceTable && columns.length > 0 && supportedTypes.length > 0" class="convert__filter-options">
+        <div class="convert__filter-item" v-for="option in filterOptions" :key="option.value">
+          <input type="radio" :id="option.value" :value="option.value" v-model="selectedFilter">
+          <label :for="option.value">{{ option.label }}</label>
+        </div>
       </div>
 
-      <ColumnMapping
-        v-if="showSourceTable && columns.length > 0 && supportedTypes.length > 0"
-        :columns="columns"
-        :supported-types="supportedTypes"
-        v-model="columnMappings"
-        v-model:characteristicLinks="characteristicLinks"
-      />
+      <div v-if="(showSourceTable || showSourceXml) && convertToOptions.length > 0" class="convert__options">
+        <label class="convert__label">Конвертировать в</label>
+        <DropBox class="convert__drop-box" :options="convertToOptions" v-model="selectedOutputFormat" />
+      </div>
+
+      <ColumnMapping v-if="showSourceTable && columns.length > 0 && supportedTypes.length > 0" :columns="columns"
+        :supported-types="filteredOptions" v-model="columnMappings" v-model:characteristicLinks="characteristicLinks" />
       <p v-if="showSourceTable && !isCharacteristicUnitMappingValid" class="convert__error">
         Для поля "Ед.Изм. характеристики товара" должна быть выбрана связанная колонка "Характеристика товара".
       </p>
