@@ -69,6 +69,12 @@ export interface ConfigResponseDto {
     labelRu?: string;
     description?: string;
     filter?: string[];
+    domains: string[];
+    priority: {
+      universal: "secondary" | "primary" | "hidden";
+      food: "secondary" | "primary" | "hidden";
+      retail: "secondary" | "primary" | "hidden";
+    };
   }[];
   /** Output formats for "Convert to" (e.g. table, xml). Frontend excludes current format. */
   supportedOutputFormats: {
