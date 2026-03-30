@@ -18,7 +18,7 @@ import {
 import "./ConvertView.css";
 
 type TableData = (string | number | boolean | null)[][];
-type TSelectedFilter = "none" | "mod" | "product" | "category";
+type TSelectedFilter = "none" | "food" | "retail";
 
 const XML_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: "yandex", label: "Yandex" },
@@ -43,9 +43,9 @@ const selectedOutputFormat = ref<string>("");
 const selectedFilter = ref<TSelectedFilter>('none')
 
 const filterOptions: { value: TSelectedFilter; label: string }[] = [
-  { value: 'category', label: 'Категории' },
-  { value: 'product', label: 'Товары' },
-  { value: 'mod', label: 'Модификаторы' },
+  { value: 'none', label: 'Общий' },
+  { value: 'food', label: 'Food' },
+  { value: 'retail', label: 'Retail' },
 ]
 
 const filteredOptions = computed(() => {
@@ -141,7 +141,7 @@ const canConvert = computed(() => {
 
 const mappingsForBackend = computed(() => {
   const columnsMappings: { columnIndex: number; columnName: string; columnType: string }[] = [];
-  const characteristics: { columnIndex: number; columnName: string; unitIndex?: number }[] = [];
+  const characteristics: { columnIndex: number; columnName: string; unitIndex?: number; xmlKey?: string }[] = [];
 
   columns.value.forEach((col) => {
     const t = columnMappings.value[col.index];
@@ -315,6 +315,7 @@ watch(convertToOptions, (opts) => {
       </Button>
 
       <div v-if="showSourceTable && columns.length > 0 && supportedTypes.length > 0" class="convert__filter-options">
+        <label class="convert__label">Выберите тип номенклатуры:</label>
         <div class="convert__filter-item" v-for="option in filterOptions" :key="option.value">
           <input type="radio" :id="option.value" :value="option.value" v-model="selectedFilter">
           <label :for="option.value">{{ option.label }}</label>

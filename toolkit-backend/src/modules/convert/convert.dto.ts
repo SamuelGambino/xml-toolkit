@@ -45,6 +45,7 @@ export interface CharacteristicColumnMapping {
   columnIndex: number;
   columnName: string;
   unitIndex?: number;
+  xmlKey?: string;
 }
 
 export interface ColumnMappingConfig {
@@ -68,7 +69,7 @@ export interface ConfigResponseDto {
     label: string;
     labelRu?: string;
     description?: string;
-    filter?: string[];
+    filter: string[];
     domains: string[];
     priority: {
       universal: "secondary" | "primary" | "hidden";

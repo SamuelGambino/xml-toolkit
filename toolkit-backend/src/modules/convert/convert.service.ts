@@ -13,8 +13,8 @@ import { UniversalXmlParser, XmlSourceType } from './parsers/universalXmlParser'
 export type SourceType = 'table' | XmlSourceType;
 
 
-const SUPPORTED_SOURCE_TYPES: SourceType[] = ['table', 'yml', 'delivery_club', 'google_feed'];
-const SUPPORTED_TARGET_TYPES: TargetType[] = ['table', 'yml', 'delivery_club', 'google_feed'];
+const SUPPORTED_SOURCE_TYPES: SourceType[] = ['table', 'yml', 'extended_yml', 'google_feed'];
+const SUPPORTED_TARGET_TYPES: TargetType[] = ['table', 'yml', 'extended_yml', 'google_feed'];
 
 export class ConvertService {
   async parseTableToUniversal(

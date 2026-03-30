@@ -28,6 +28,7 @@ export interface ProductParameterCharacteristic {
   name: string;
   value: string | number;
   unit?: string;
+  key?: string;
 }
 
 export interface ProductParameter {

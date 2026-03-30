@@ -2,7 +2,7 @@ import * as xml2js from 'xml2js';
 import { UniversalProductData, Category, Product, ProductParameter, ModifierGroup, Modifier } from '../domain/models';
 import { generateId } from '../domain/idGenerator';
 
-export type XmlSourceType = 'yml' | 'delivery_club' | 'google_feed';
+export type XmlSourceType = 'yml' | 'extended_yml' | 'google_feed';
 
 const toArray = <T>(value: T | T[] | undefined): T[] => {
   if (value === undefined || value === null) return [];
@@ -33,8 +33,8 @@ export class UniversalXmlParser {
     switch (sourceType) {
       case 'yml':
         return this.fromYml(result);
-      case 'delivery_club':
-        return this.fromDeliveryClub(result);
+      case 'extended_yml':
+        return this.fromExtendedYml(result);
       case 'google_feed':
         return this.fromGoogleFeed(result);
       default:
@@ -77,7 +77,7 @@ export class UniversalXmlParser {
     return { categories: [...categoryById.values()], modifierGroups };
   }
 
-  private static fromDeliveryClub(parsed: any): UniversalProductData {
+  private static fromExtendedYml(parsed: any): UniversalProductData {
     const shop = parsed?.dc_catalog?.shop ?? parsed?.yml_catalog?.shop ?? parsed?.shop;
     if (!shop) return { categories: [], modifierGroups: [] };
     return this.fromYml({ yml_catalog: { shop } });

@@ -41,8 +41,9 @@
 .convert__filter-options {
   display: inline-flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.45rem;
-
+  padding: 0 0.75rem;
 }
 
 .convert__filter-item {

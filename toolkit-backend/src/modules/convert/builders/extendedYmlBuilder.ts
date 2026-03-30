@@ -2,7 +2,7 @@ import * as xml2js from 'xml2js';
 import { UniversalProductData } from '../domain/models';
 import { createShopPayload } from './xmlShared';
 
-export class DeliveryClubBuilder {
+export class ExtendedYmlBuilder {
   static build(data: UniversalProductData): string {
     const payload = {
       dc_catalog: {

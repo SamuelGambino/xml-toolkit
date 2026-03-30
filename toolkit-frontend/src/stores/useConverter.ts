@@ -176,7 +176,7 @@ export const useConvertStore = defineStore("convert", () => {
     file: File,
     mappings: {
       columns: { columnIndex: number; columnName: string; columnType: string }[];
-      characteristic?: { columnIndex: number; columnName: string; unitIndex?: number }[];
+      characteristic?: { columnIndex: number; columnName: string; unitIndex?: number; xmlKey?: string; }[];
     },
     params: { sourceType: string; targetType: string }
   ) => {

@@ -1,10 +1,10 @@
 import { UniversalProductData } from '../domain/models';
-import { DeliveryClubBuilder } from './deliveryClubBuilder';
+import { ExtendedYmlBuilder } from './extendedYmlBuilder';
 import { GoogleFeedBuilder } from './googleFeedBuilder';
 import { TableBuilder } from './tableBuilder';
 import { YmlBuilder } from './ymlBuilder';
 
-export type TargetType = 'table' | 'yml' | 'delivery_club' | 'google_feed';
+export type TargetType = 'table' | 'yml' | 'extended_yml' | 'google_feed';
 
 export interface BuiltFile {
   filename: string;
@@ -27,11 +27,11 @@ export class OutputBuilders {
           mimeType: 'application/xml; charset=utf-8',
           content: YmlBuilder.build(data),
         };
-      case 'delivery_club':
+      case 'extended_yml':
         return {
-          filename: 'converted-delivery-club.xml',
+          filename: 'converted-extended_yml.xml',
           mimeType: 'application/xml; charset=utf-8',
-          content: DeliveryClubBuilder.build(data),
+          content: ExtendedYmlBuilder.build(data),
         };
       case 'google_feed':
         return {
