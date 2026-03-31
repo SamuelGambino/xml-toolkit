@@ -12,6 +12,9 @@ export type XmlType =
   | "facebook"
   | "product_feed"
   | null;
+  
+export type ColumnTemplate = "universal" | "food" | "retail";
+export type ColumnVisibilityPriority = "primary" | "secondary" | "hidden";
 
 export interface IConvertStore {
   xml: {
@@ -34,6 +37,8 @@ export interface IConfigColumnType {
   labelRu?: string;
   description?: string;
   filter?: string[];
+    domains?: string[];
+  priority?: Partial<Record<ColumnTemplate, ColumnVisibilityPriority>>;
 }
 
 export interface IConfigOutputFormat {

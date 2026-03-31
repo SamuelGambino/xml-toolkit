@@ -13,12 +13,13 @@ import DropBox from "@/components/DropBox/DropBox.vue";
 import {
   useConvertStore,
   getColumnNames,
+  type ColumnTemplate,
   type XmlType,
 } from "@/stores/useConverter";
 import "./ConvertView.css";
 
 type TableData = (string | number | boolean | null)[][];
-type TSelectedFilter = "none" | "food" | "retail";
+type TSelectedFilter = ColumnTemplate;
 
 const XML_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: "yandex", label: "Yandex" },
@@ -40,22 +41,23 @@ const convertError = ref<string | null>(null);
 const uploadError = ref<string | null>(null);
 const convertLoading = ref(false);
 const selectedOutputFormat = ref<string>("");
-const selectedFilter = ref<TSelectedFilter>('none')
+const selectedFilter = ref<TSelectedFilter>('universal')
 
 const filterOptions: { value: TSelectedFilter; label: string }[] = [
-  { value: 'none', label: 'Общий' },
+  { value: 'universal', label: 'Общий' },
   { value: 'food', label: 'Food' },
   { value: 'retail', label: 'Retail' },
 ]
 
 const filteredOptions = computed(() => {
-  if (selectedFilter.value === 'none') {
-    return supportedTypes.value
-  }
+  const selectedDomain = selectedOutputFormat.value
 
-  return supportedTypes.value.filter(
-    (opt) => !opt.filter || opt.filter.includes(selectedFilter.value)
-  )
+  return supportedTypes.value.filter((opt) => {
+    if (!selectedDomain) return true
+    if (!opt.domains || opt.domains.length === 0) return true
+
+  return opt.domains.includes(selectedDomain)
+  })
 });
 
 const onUpload = async (file: NormalizedFile) => {
@@ -328,7 +330,8 @@ watch(convertToOptions, (opts) => {
       </div>
 
       <ColumnMapping v-if="showSourceTable && columns.length > 0 && supportedTypes.length > 0" :columns="columns"
-        :supported-types="filteredOptions" v-model="columnMappings" v-model:characteristicLinks="characteristicLinks" />
+        :supported-types="filteredOptions" :selected-template="selectedFilter" v-model="columnMappings"
+        v-model:characteristicLinks="characteristicLinks" />
       <p v-if="showSourceTable && !isCharacteristicUnitMappingValid" class="convert__error">
         Для поля "Ед.Изм. характеристики товара" должна быть выбрана связанная колонка "Характеристика товара".
       </p>

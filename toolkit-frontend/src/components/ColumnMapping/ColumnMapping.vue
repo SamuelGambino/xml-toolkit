@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { IConfigColumnType } from '@/stores/useConverter'
+import type {
+  ColumnTemplate,
+  ColumnVisibilityPriority,
+  IConfigColumnType,
+} from '@/stores/useConverter'
 import './ColumnMapping.css'
 import ColumnMappingRow from './ColumnMappingRow.vue'
 
@@ -9,6 +13,7 @@ const props = defineProps<{
   supportedTypes: IConfigColumnType[]
   modelValue: Record<number, string>
   characteristicLinks?: Record<number, number>
+  selectedTemplate: ColumnTemplate
 }>()
 
 const emit = defineEmits<{
@@ -19,11 +24,52 @@ const emit = defineEmits<{
 const PRODUCT_CHARACTERISTIC = 'ProductParameterCharacteristic'
 const PRODUCT_CHARACTERISTIC_UNIT = 'ProductParameterCharacteristicUnit'
 
-const emptyOption = { value: '', labelRu: 'Не выбрано', label: 'Не выбрано', filter: undefined }
+type MappingMode = 'easy' | 'advanced'
 
-const options = computed(() =>
-  [emptyOption, ...props.supportedTypes].map((opt) => ({ value: opt.value, label: opt.labelRu ?? opt.label, filter: opt?.filter }))
+const emptyOption = {
+  value: '',
+  labelRu: 'Не выбрано',
+  label: 'Не выбрано',
+  filter: undefined,
+  priority: undefined,
+}
+
+const allOptions = computed(() =>
+  [emptyOption, ...props.supportedTypes].map((opt) => ({
+    value: opt.value,
+    label: opt.labelRu ?? opt.label,
+    filter: opt?.filter,
+    priority: opt?.priority,
+  }))
 )
+
+const mappingMode = ref<MappingMode>('easy')
+const rowAdvancedMode = ref<Record<number, boolean>>({})
+
+const resolvePriority = (
+  priority: Partial<Record<ColumnTemplate, ColumnVisibilityPriority>> | undefined
+): ColumnVisibilityPriority => {
+  return priority?.[props.selectedTemplate] ?? 'primary'
+}
+
+const isOptionVisible = (
+  option: (typeof allOptions.value)[number],
+  enableSecondary: boolean
+): boolean => {
+  if (option.value === '') return true
+
+  const priority = resolvePriority(option.priority)
+
+  if (priority === 'hidden') return false
+  if (priority === 'primary') return true
+
+  return enableSecondary
+}
+
+const getRowOptions = (columnIndex: number) => {
+  const enableSecondary = mappingMode.value === 'advanced' || Boolean(rowAdvancedMode.value[columnIndex])
+  return allOptions.value.filter((option) => isOptionVisible(option, enableSecondary))
+}
 
 const rowOrder = ref<number[]>([])
 
@@ -34,6 +80,13 @@ watch(
     const preserved = rowOrder.value.filter((index) => nextIndices.includes(index))
     const appended = nextIndices.filter((index) => !preserved.includes(index))
     rowOrder.value = [...preserved, ...appended]
+    const nextRowAdvanced: Record<number, boolean> = {}
+    nextIndices.forEach((index) => {
+      if (rowAdvancedMode.value[index]) {
+        nextRowAdvanced[index] = true
+      }
+    })
+    rowAdvancedMode.value = nextRowAdvanced
   },
   { immediate: true, deep: true }
 )
@@ -53,6 +106,13 @@ const updateMapping = (columnIndex: number, columnType: string) => {
     delete next[columnIndex]
   }
   emit('update:modelValue', next)
+}
+
+const setRowAdvancedMode = (columnIndex: number, enabled: boolean) => {
+  rowAdvancedMode.value = {
+    ...rowAdvancedMode.value,
+    [columnIndex]: enabled,
+  }
 }
 
 const pairsState = computed(() => {
@@ -185,6 +245,11 @@ const handleDragOver = (payload: { targetIndex: number; clientY: number; rect: D
   }
 }
 
+const handleModeToggle = (event: Event) => {
+  const target = event.target as HTMLInputElement | null
+  mappingMode.value = target?.checked ? 'advanced' : 'easy'
+}
+
 const handleDrop = (payload: { targetIndex: number; clientY: number; rect: DOMRect }) => {
   if (draggingColumn.value === null) return
 
@@ -200,19 +265,32 @@ const handleDrop = (payload: { targetIndex: number; clientY: number; rect: DOMRe
 
 <template>
   <div v-if="columns.length" class="column-mapping">
-    <h4 class="column-mapping__title">Сопоставление колонок</h4>
+    <div class="column-mapping__header">
+      <h4 class="column-mapping__title">Сопоставление колонок</h4>
+
+      <label class="column-mapping__mode-switch">
+        <span class="column-mapping__mode-label">Easy</span>
+        <input type="checkbox" :checked="mappingMode === 'advanced'" @change="handleModeToggle">
+        <span class="column-mapping__mode-slider" />
+        <span class="column-mapping__mode-label">Advanced</span>
+      </label>
+    </div>
+
     <ul class="column-mapping__list">
       <ColumnMappingRow
         v-for="col in orderedColumns"
         :key="col.index"
         :column="col"
         :mapped-type="modelValue[col.index] ?? ''"
-        :options="options"
+        :options="getRowOptions(col.index)"
+        :is-row-advanced="Boolean(rowAdvancedMode[col.index])"
+        :is-global-advanced="mappingMode === 'advanced'"
         :class-name="rowClass(col.index).join(' ')"
         :is-dragging="draggingColumn === col.index"
         :is-drop-before="dropPreview?.targetIndex === col.index && !dropPreview.insertAfter"
         :is-drop-after="dropPreview?.targetIndex === col.index && dropPreview.insertAfter"
         @update:mappedType="updateMapping(col.index, $event)"
+        @update:rowAdvanced="setRowAdvancedMode(col.index, $event)"
         @dragstart="startDrag"
         @dragend="endDrag"
         @dragover="handleDragOver"

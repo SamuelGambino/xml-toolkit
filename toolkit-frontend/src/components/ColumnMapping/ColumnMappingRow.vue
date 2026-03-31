@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import DropBox from '@/components/DropBox/DropBox.vue'
 
 type TSelectedFilter = "none" | "mod" | "product" | "category";
@@ -7,7 +7,9 @@ type TSelectedFilter = "none" | "mod" | "product" | "category";
 const props = defineProps<{
   column: { index: number; name: string }
   mappedType: string
-  options: { value: string; label: string; filter?: string[] }[]
+  options: { value: string; label: string }[]
+  isRowAdvanced: boolean
+  isGlobalAdvanced: boolean
   className?: string
   isDragging?: boolean
   isDropBefore?: boolean
@@ -16,33 +18,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:mappedType', value: string): void
+  (e: 'update:rowAdvanced', value: boolean): void
   (e: 'dragstart', columnIndex: number): void
   (e: 'dragend'): void
   (e: 'dragover', payload: { targetIndex: number; clientY: number; rect: DOMRect }): void
   (e: 'drop', payload: { targetIndex: number; clientY: number; rect: DOMRect }): void
 }>()
-
-const selectedFilter = ref<TSelectedFilter>('none')
-
-const filterOptions: { value: TSelectedFilter; label: string }[] = [
-  { value: 'none', label: 'Все' },
-  { value: 'category', label: 'Категории' },
-  { value: 'product', label: 'Товары' },
-  { value: 'mod', label: 'Модификаторы' },
-]
-
-const filteredOptions = computed(() => {
-  if (selectedFilter.value === 'none') {
-    return props.options
-  }
-
-  return props.options.filter(
-    (opt) => !opt.filter || opt.filter.includes(selectedFilter.value)
-  )
-});
-
-const filterName = computed(() => `mapping-filter-${props.column.index}`)
-const filterId = (value: TSelectedFilter) => `${filterName.value}-${value}`
 
 const dynamicClasses = computed(() => [
   props.className,
@@ -50,6 +31,18 @@ const dynamicClasses = computed(() => [
   props.isDropBefore ? 'column-mapping__row--drop-before' : '',
   props.isDropAfter ? 'column-mapping__row--drop-after' : '',
 ])
+
+const dropBoxOptions = computed(() => {
+  const selected = props.options.find((option) => option.value === props.mappedType)
+  if (selected || !props.mappedType) {
+    return props.options
+  }
+
+  return [
+    ...props.options,
+    { value: props.mappedType, label: props.mappedType },
+  ]
+})
 
 const handleDragOver = (event: DragEvent) => {
   event.preventDefault()
@@ -61,6 +54,11 @@ const handleDragOver = (event: DragEvent) => {
     clientY: event.clientY,
     rect: element.getBoundingClientRect(),
   })
+}
+
+const handleRowAdvancedChange = (event: Event) => {
+  const target = event.target as HTMLInputElement | null
+  emit('update:rowAdvanced', Boolean(target?.checked))
 }
 
 const handleDrop = (event: DragEvent) => {
@@ -86,20 +84,18 @@ const handleDrop = (event: DragEvent) => {
     <div class="column-mapping__wrapper">
       <div class="column-mapping__content">
         <span class="column-mapping__name">{{ column.name }}</span>
-        <DropBox :options="filteredOptions" :modelValue="mappedType"
-          @update:modelValue="emit('update:mappedType', $event)" />
+        <DropBox :options="dropBoxOptions" :modelValue="mappedType" @update:modelValue="emit('update:mappedType', $event)" />
       </div>
 
-      <fieldset class="column-mapping__filter">
-        <legend>Фильтр списка:</legend>
-        <div class="column-mapping__filter-options">
-          <div class="column-mapping__filter-item" v-for="option in filterOptions" :key="option.value">
-            <input type="radio" :id="filterId(option.value)" :name="filterName" :value="option.value"
-              v-model="selectedFilter">
-            <label :for="filterId(option.value)">{{ option.label }}</label>
-          </div>
-        </div>
-      </fieldset>
+      <label class="column-mapping__row-advanced">
+        <input
+          type="checkbox"
+          :checked="isRowAdvanced"
+          :disabled="isGlobalAdvanced"
+          @change="handleRowAdvancedChange"
+        >
+        <span>Advanced для строки</span>
+      </label>
     </div>
   </li>
 </template>
