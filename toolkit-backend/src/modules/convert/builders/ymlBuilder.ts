@@ -1,5 +1,7 @@
 import * as xml2js from 'xml2js';
 import { UniversalProductData } from '../domain/models';
+import { ColumnType } from '../convert.dto';
+import { getXmlFieldConfig } from './xmlFieldConfig';
 
 const formatYmlDate = (date: Date): string => {
   const pad = (v: number) => String(v).padStart(2, '0');
@@ -9,21 +11,31 @@ const formatYmlDate = (date: Date): string => {
 
 export class YmlBuilder {
   static build(data: UniversalProductData): string {
-    const offers = data.categories.flatMap((category) =>
-      category.products.flatMap((product) => {
+    const productIdCfg = getXmlFieldConfig('yml', ColumnType.PRODUCT_ID);
+    const productNameCfg = getXmlFieldConfig('yml', ColumnType.PRODUCT_NAME);
+    const productDescriptionCfg = getXmlFieldConfig('yml', ColumnType.PRODUCT_DESCRIPTION);
+    const productImageCfg = getXmlFieldConfig('yml', ColumnType.PRODUCT_IMAGE);
+    const productLinkCfg = getXmlFieldConfig('yml', ColumnType.PRODUCT_LINK);
+    const productPriceCfg = getXmlFieldConfig('yml', ColumnType.PRODUCT_PARAMETER_PRICE);
+    const categoryIdCfg = getXmlFieldConfig('yml', ColumnType.CATEGORY_ID);
+
+    const offers: any[] = [];
+    data.categories.forEach((category) => {
+      category.products.forEach((product) => {
         if (!product.parameters.length) {
-          return {
-            $: { id: product.id, available: 'true' },
-            url: product.link ?? '',
-            price: 0,
+          offers.push({
+            $: { [productIdCfg?.attribute ?? 'id']: product.id, available: 'true' },
+            [productLinkCfg?.tag ?? 'url']: product.link ?? '',
+            [productPriceCfg?.tag ?? 'price']: 0,
             categoryId: category.id,
-            picture: product.image ?? '',
-            name: product.name,
-            description: product.description ?? '',
-          };
+            [productImageCfg?.tag ?? 'picture']: product.image ?? '',
+            [productNameCfg?.tag ?? 'name']: product.name,
+            [productDescriptionCfg?.tag ?? 'description']: product.description ?? '',
+          });
+          return;
         }
 
-        return product.parameters.map((parameter) => {
+        product.parameters.forEach((parameter) => {
           const params = (parameter.characteristics ?? []).map((characteristic) => ({
             $: {
               name: characteristic.name,
@@ -32,27 +44,27 @@ export class YmlBuilder {
             _: String(characteristic.value ?? ''),
           }));
 
-          return {
+          offers.push({
             $: {
-              id: parameter.id || product.id,
+              [productIdCfg?.attribute ?? 'id']: parameter.id || product.id,
               group_id: product.id,
               available: 'true',
             },
-            url: product.link ?? '',
-            price: parameter.price ?? 0,
+            [productLinkCfg?.tag ?? 'url']: product.link ?? '',
+            [productPriceCfg?.tag ?? 'price']: parameter.price ?? 0,
             categoryId: category.id,
-            picture: product.image ?? '',
-            name: product.name,
-            description: product.description ?? '',
+            [productImageCfg?.tag ?? 'picture']: product.image ?? '',
+            [productNameCfg?.tag ?? 'name']: product.name,
+            [productDescriptionCfg?.tag ?? 'description']: product.description ?? '',
             ...(params.length > 0 ? { param: params } : {}),
-          };
+          });
         });
-      })
-    );
+      });
+    });
 
     const categories = data.categories.map((category) => ({
       $: {
-        id: category.id,
+        [categoryIdCfg?.attribute ?? 'id']: category.id,
         ...(category.parentId ? { parentId: category.parentId } : {}),
       },
       _: category.name,

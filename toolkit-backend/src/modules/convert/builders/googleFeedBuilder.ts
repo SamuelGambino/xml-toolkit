@@ -1,31 +1,40 @@
 import * as xml2js from 'xml2js';
 import { UniversalProductData } from '../domain/models';
+import { ColumnType } from '../convert.dto';
+import { getXmlFieldConfig } from './xmlFieldConfig';
 
 export class GoogleFeedBuilder {
   static build(data: UniversalProductData): string {
+    const productIdCfg = getXmlFieldConfig('google_feed', ColumnType.PRODUCT_ID);
+    const productNameCfg = getXmlFieldConfig('google_feed', ColumnType.PRODUCT_NAME);
+    const productDescriptionCfg = getXmlFieldConfig('google_feed', ColumnType.PRODUCT_DESCRIPTION);
+    const productLinkCfg = getXmlFieldConfig('google_feed', ColumnType.PRODUCT_LINK);
+    const productImageCfg = getXmlFieldConfig('google_feed', ColumnType.PRODUCT_IMAGE);
+    const productPriceCfg = getXmlFieldConfig('google_feed', ColumnType.PRODUCT_PARAMETER_PRICE);
+
     const items = data.categories.flatMap((category) =>
       category.products.flatMap((product) => {
         if (!product.parameters.length) {
           return {
-            'g:id': product.id,
-            'g:title': product.name,
-            'g:description': product.description ?? '',
-            'g:link': product.link ?? '',
-            'g:image_link': product.image ?? '',
-            'g:price': '0 RUB',
+            [productIdCfg?.tag ?? 'g:id']: product.id,
+            [productNameCfg?.tag ?? 'g:title']: product.name,
+            [productDescriptionCfg?.tag ?? 'g:description']: product.description ?? '',
+            [productLinkCfg?.tag ?? 'g:link']: product.link ?? '',
+            [productImageCfg?.tag ?? 'g:image_link']: product.image ?? '',
+            [productPriceCfg?.tag ?? 'g:price']: '0 RUB',
             'g:availability': 'in_stock',
             'g:product_type': this.buildProductType(category.id, data),
           };
         }
 
         return product.parameters.map((parameter) => ({
-          'g:id': parameter.id || product.id,
+          [productIdCfg?.tag ?? 'g:id']: parameter.id || product.id,
           'g:item_group_id': product.id,
-          'g:title': product.name,
-          'g:description': product.description ?? '',
-          'g:link': product.link ?? '',
-          'g:image_link': product.image ?? '',
-          'g:price': `${parameter.price ?? 0} RUB`,
+          [productNameCfg?.tag ?? 'g:title']: product.name,
+          [productDescriptionCfg?.tag ?? 'g:description']: product.description ?? '',
+          [productLinkCfg?.tag ?? 'g:link']: product.link ?? '',
+          [productImageCfg?.tag ?? 'g:image_link']: product.image ?? '',
+          [productPriceCfg?.tag ?? 'g:price']: `${parameter.price ?? 0} RUB`,
           'g:availability': 'in_stock',
           'g:product_type': this.buildProductType(category.id, data),
         }));

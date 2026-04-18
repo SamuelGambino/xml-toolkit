@@ -54,9 +54,9 @@ const filteredOptions = computed(() => {
 
   return supportedTypes.value.filter((opt) => {
     if (!selectedDomain) return true
-    if (!opt.domains || opt.domains.length === 0) return true
+    if (!opt.domains || Object.keys(opt.domains).length === 0) return true
 
-  return opt.domains.includes(selectedDomain)
+    return Boolean(opt.domains[selectedDomain as "yml" | "extended_yml" | "google_feed"])
   })
 });
 
