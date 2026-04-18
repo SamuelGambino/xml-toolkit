@@ -21,8 +21,19 @@ const text = (value: any): string | undefined => {
 };
 
 const numberOrUndefined = (value: any): number | undefined => {
-  const parsed = Number(String(value ?? '').replace(',', '.'));
+  const normalized = String(value ?? '').trim().replace(',', '.');
+  if (normalized === '') return undefined;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const pick = (obj: any, ...keys: string[]): any => {
+  for (const key of keys) {
+    if (obj?.[key] !== undefined) {
+      return obj[key];
+    }
+  }
+  return undefined;
 };
 
 export class UniversalXmlParser {
@@ -80,7 +91,36 @@ export class UniversalXmlParser {
   private static fromExtendedYml(parsed: any): UniversalProductData {
     const shop = parsed?.dc_catalog?.shop ?? parsed?.yml_catalog?.shop ?? parsed?.shop;
     if (!shop) return { categories: [], modifierGroups: [] };
-    return this.fromYml({ yml_catalog: { shop } });
+
+    const categoriesRaw = toArray(shop.categories?.category);
+    const itemsRaw = toArray(shop.items?.item ?? shop.offers?.offer);
+    const modifierGroupsRaw = toArray(shop.modifiers_groups?.modifiers_group ?? shop.modifiersGroups?.modifiersGroup);
+    const modifiersRaw = toArray(shop.modifiers?.modifier);
+
+    const modifierGroups = this.mapModifierGroups(modifierGroupsRaw, modifiersRaw);
+
+    const categoryById = new Map<string, Category>();
+    categoriesRaw.forEach((cat) => {
+      const id = text(cat.id) ?? generateId('cat');
+      categoryById.set(id, {
+        id,
+        name: text(cat._) ?? text(cat['#text']) ?? text(cat.name) ?? '',
+        parentId: text(pick(cat, 'parent_id', 'parentId')),
+        products: [],
+      });
+    });
+
+    itemsRaw.forEach((item) => {
+      const categoryId = text(pick(item, 'category_id', 'categoryId')) ?? 'uncategorized';
+      if (!categoryById.has(categoryId)) {
+        categoryById.set(categoryId, { id: categoryId, name: 'Без категории', products: [] });
+      }
+
+      const product = this.mapOfferToProduct(item);
+      categoryById.get(categoryId)!.products.push(product);
+    });
+
+    return { categories: [...categoryById.values()], modifierGroups };
   }
 
   private static fromGoogleFeed(parsed: any): UniversalProductData {
@@ -131,7 +171,7 @@ export class UniversalXmlParser {
     const modifiersByGroup = new Map<string, Modifier[]>();
 
     modifiersRaw.forEach((modifier) => {
-      const groupId = text(modifier.modifiersGroupId);
+      const groupId = text(pick(modifier, 'modifiersGroupId', 'modifiers_group_id'));
       if (!groupId) return;
       if (!modifiersByGroup.has(groupId)) modifiersByGroup.set(groupId, []);
       modifiersByGroup.get(groupId)!.push({
@@ -176,6 +216,17 @@ export class UniversalXmlParser {
                 value: numberOrUndefined(text(item.value)) ?? text(item.value) ?? '',
                 unit: text(item.unit),
               })),
+              ...[
+                { name: 'Proteins', key: 'proteins' },
+                { name: 'Fats', key: 'fats' },
+                { name: 'Carbohydrates', key: 'carbohydrates' },
+                { name: 'Calories', key: 'calories' },
+              ]
+                .map((meta) => ({
+                  name: meta.name,
+                  value: numberOrUndefined(text(param[meta.key])) ?? text(param[meta.key]),
+                }))
+                .filter((item): item is { name: string; value: string | number } => item.value !== undefined),
             ].filter((item) => item.name !== ''),
           };
         })
@@ -187,7 +238,10 @@ export class UniversalXmlParser {
           },
         ];
 
-    const modifers = toArray(offer.modifiersGroupsIds?.modifiersGroupId)
+    const modifers = toArray(
+      pick(offer, 'modifiersGroupsIds', 'modifiers_groups_ids')?.modifiersGroupId ??
+        pick(offer, 'modifiersGroupsIds', 'modifiers_groups_ids')?.modifiers_group_id
+    )
       .map((id) => text(id))
       .filter((id): id is string => Boolean(id));
 
@@ -195,7 +249,7 @@ export class UniversalXmlParser {
       id: productId,
       name: text(offer.name) ?? '',
       description: text(offer.description),
-      image: text(offer.picture),
+      image: text(offer.picture) ?? text(offer.images?.large),
       modifers,
       parameters,
     };

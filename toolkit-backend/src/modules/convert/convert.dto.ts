@@ -30,6 +30,20 @@ export enum ColumnType {
   PRODUCT_PARAMETER_CHARACTERISTIC = 'ProductParameterCharacteristic',
   PRODUCT_PARAMETER_CHARACTERISTIC_UNIT = 'ProductParameterCharacteristicUnit',
   PRODUCT_PARAMETER_PRICE = 'ProductParameterPrice',
+  PRODUCT_VENDOR_CODE = 'ProductVendorCode',
+  PRODUCT_LABEL_ID = 'ProductLabelId',
+  PRODUCT_SORT = 'ProductSort',
+  PRODUCT_PARAMETER_DESCRIPTION = 'ProductParameterDescription',
+  PRODUCT_PARAMETER_VENDOR_CODE = 'ProductParameterVendorCode',
+  PRODUCT_PARAMETER_SORT = 'ProductParameterSort',
+  PRODUCT_PARAMETER_PROTEINS = 'ProductParameterProteins',
+  PRODUCT_PARAMETER_FATS = 'ProductParameterFats',
+  PRODUCT_PARAMETER_CARBOHYDRATES = 'ProductParameterCarbohydrates',
+  PRODUCT_PARAMETER_CALORIES = 'ProductParameterCalories',
+  MODIFIER_GROUP_REQUIRED = 'ModifierGroupRequired',
+  MODIFIER_GROUP_SORT = 'ModifierGroupSort',
+  MODIFIER_VENDOR_CODE = 'ModifierVendorCode',
+  MODIFIER_SORT = 'ModifierSort',
 }
 
 /**
@@ -70,7 +84,7 @@ export interface ConfigResponseDto {
     labelRu?: string;
     description?: string;
     filter: string[];
-    domains: string[];
+    domains: Partial<Record<'yml' | 'extended_yml' | 'google_feed', { tag: string; attribute?: string }>>;
     priority: {
       universal: "secondary" | "primary" | "hidden";
       food: "secondary" | "primary" | "hidden";
