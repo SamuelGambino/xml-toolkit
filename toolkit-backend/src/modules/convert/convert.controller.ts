@@ -27,16 +27,37 @@ export class ConvertController {
   }
 
   getConfig = (req: Request, res: Response): void => {
-    const xmlDomains = (domains: Partial<Record<'yml' | 'extended_yml' | 'google_feed', { tag: string; attribute?: string }>>) =>
-      domains;
+    const inferParentTag = (domain: 'yml' | 'extended_yml' | 'google_feed', tag: string): string => {
+      if (tag === 'category') return 'categories';
+      if (domain === 'google_feed') return 'item';
+      if (domain === 'extended_yml') {
+        if (['modifier', 'name', 'price', 'vendor_code', 'sort'].includes(tag)) return 'item';
+        return 'item';
+      }
+      return 'offer';
+    };
+
+    const xmlDomains = (
+      domains: Partial<Record<'yml' | 'extended_yml' | 'google_feed', { parent_tag?: string; tag: string; attribute?: string }>>
+    ): Partial<Record<'yml' | 'extended_yml' | 'google_feed', { parent_tag: string; tag: string; attribute?: string }>> =>
+      Object.fromEntries(
+        Object.entries(domains).map(([domain, config]) => [
+          domain,
+          {
+            parent_tag: config!.parent_tag ?? inferParentTag(domain as 'yml' | 'extended_yml' | 'google_feed', config!.tag),
+            tag: config!.tag,
+            ...(config!.attribute ? { attribute: config!.attribute } : {}),
+          },
+        ])
+      );
 
     const config: ConfigResponseDto = {
       supportedColumnTypes: [
         { value: ColumnType.CATEGORY_ID, label: 'Category ID', labelRu: 'Артикул/ID категории', description: 'Category article/ID', filter: [ "category" ], 
           domains: xmlDomains({
-            yml: { tag: 'category', attribute: 'id' },
-            extended_yml: { tag: 'category', attribute: 'id' },
-            google_feed: { tag: 'g:google_product_category' },
+            yml: { parent_tag: 'categories', tag: 'category', attribute: 'id' },
+            extended_yml: { parent_tag: 'categories', tag: 'category', attribute: 'id' },
+            google_feed: { parent_tag: 'item', tag: 'g:google_product_category' },
           }), 
           priority: {
             universal: "primary",
@@ -45,9 +66,9 @@ export class ConvertController {
           }},
         { value: ColumnType.CATEGORY_NAME, label: 'Category', labelRu: 'Имя категории', description: 'Category name', filter: [ "category" ], 
           domains: xmlDomains({
-            yml: { tag: 'category' },
-            extended_yml: { tag: 'category' },
-            google_feed: { tag: 'g:google_product_category' },
+            yml: { parent_tag: 'categories', tag: 'category' },
+            extended_yml: { parent_tag: 'categories', tag: 'category' },
+            google_feed: { parent_tag: 'item', tag: 'g:google_product_category' },
           }), 
           priority: {
             universal: "primary",
@@ -56,9 +77,9 @@ export class ConvertController {
           }},
         { value: ColumnType.SUBCATEGORY_NAME, label: 'Subcategory Name', labelRu: 'Имя подкатегории', description: 'Subcategory name', filter: [ "category" ], 
           domains: xmlDomains({
-            yml: { tag: 'category' },
-            extended_yml: { tag: 'category', attribute: 'parent_id' },
-            google_feed: { tag: 'g:product_type' },
+            yml: { parent_tag: 'categories', tag: 'category' },
+            extended_yml: { parent_tag: 'categories', tag: 'category', attribute: 'parent_id' },
+            google_feed: { parent_tag: 'item', tag: 'g:product_type' },
           }), 
           priority: {
             universal: "primary",
@@ -67,9 +88,9 @@ export class ConvertController {
           }},
         { value: ColumnType.SUBCATEGORY_ID, label: 'Subcategory ID', labelRu: 'Артикул/ID подкатегории', description: 'Subcategory article/ID', filter: [ "category" ], 
           domains: xmlDomains({
-            yml: { tag: 'category', attribute: 'parentId' },
-            extended_yml: { tag: 'category', attribute: 'parent_id' },
-            google_feed: { tag: 'g:product_type' },
+            yml: { parent_tag: 'categories', tag: 'category', attribute: 'parentId' },
+            extended_yml: { parent_tag: 'categories', tag: 'category', attribute: 'parent_id' },
+            google_feed: { parent_tag: 'item', tag: 'g:product_type' },
           }), 
           priority: {
             universal: "secondary",
@@ -78,9 +99,9 @@ export class ConvertController {
           }},
         { value: ColumnType.PRODUCT_ID, label: 'Product ID', labelRu: 'Артикул/ID товара', description: 'Product article/ID', filter: [ "product" ], 
           domains: xmlDomains({
-            yml: { tag: 'offer', attribute: 'id' },
-            extended_yml: { tag: 'item', attribute: 'id' },
-            google_feed: { tag: 'g:id' },
+            yml: { parent_tag: 'offer', tag: 'offer', attribute: 'id' },
+            extended_yml: { parent_tag: 'item', tag: 'item', attribute: 'id' },
+            google_feed: { parent_tag: 'item', tag: 'g:id' },
           }), 
           priority: {
             universal: "primary",
@@ -89,9 +110,9 @@ export class ConvertController {
           }},
         { value: ColumnType.PRODUCT_NAME, label: 'Product Name', labelRu: 'Имя товара', description: 'Name of the product', filter: [ "product" ], 
           domains: xmlDomains({
-            yml: { tag: 'name' },
-            extended_yml: { tag: 'name' },
-            google_feed: { tag: 'g:name' },
+            yml: { parent_tag: 'offer', tag: 'name' },
+            extended_yml: { parent_tag: 'item', tag: 'name' },
+            google_feed: { parent_tag: 'item', tag: 'g:title' },
           }), 
           priority: {
             universal: "primary",
@@ -100,9 +121,9 @@ export class ConvertController {
           }},
         { value: ColumnType.PRODUCT_DESCRIPTION, label: 'Product Description', labelRu: 'Описание товара', description: 'Description of the product', filter: [ "product" ], 
           domains: xmlDomains({
-            yml: { tag: 'description' },
-            extended_yml: { tag: 'description' },
-            google_feed: { tag: 'g:description' },
+            yml: { parent_tag: 'offer', tag: 'description' },
+            extended_yml: { parent_tag: 'item', tag: 'description' },
+            google_feed: { parent_tag: 'item', tag: 'g:description' },
           }), 
           priority: {
             universal: "primary",
@@ -111,9 +132,9 @@ export class ConvertController {
           }},
         { value: ColumnType.PRODUCT_IMAGE, label: 'Product Image', labelRu: 'Изображение товара', description: 'URL or path to product image', filter: [ "product" ], 
           domains: xmlDomains({
-            yml: { tag: 'picture' },
-            extended_yml: { tag: 'large' },
-            google_feed: { tag: 'g:image_link' },
+            yml: { parent_tag: 'offer', tag: 'picture' },
+            extended_yml: { parent_tag: 'item.images', tag: 'large' },
+            google_feed: { parent_tag: 'item', tag: 'g:image_link' },
           }), 
           priority: {
             universal: "secondary",
