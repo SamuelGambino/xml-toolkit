@@ -51,8 +51,77 @@ export class ConvertController {
         ])
       );
 
-    const config: ConfigResponseDto = {
-      supportedColumnTypes: [
+    const explicitAutoMappingKeywords: Partial<Record<ColumnType, string[]>> = {
+      [ColumnType.CATEGORY_ID]: ['category id', 'id категории', 'категория id'],
+      [ColumnType.CATEGORY_NAME]: ['category name', 'категория', 'раздел'],
+      [ColumnType.SUBCATEGORY_NAME]: ['subcategory', 'подкатегория', 'подраздел'],
+      [ColumnType.SUBCATEGORY_ID]: ['subcategory id', 'id подкатегории'],
+      [ColumnType.PRODUCT_ID]: ['product id', 'id товара', 'артикул'],
+      [ColumnType.PRODUCT_NAME]: ['product name', 'name', 'наименование', 'товар'],
+      [ColumnType.PRODUCT_DESCRIPTION]: ['description', 'описание', 'комментарий'],
+      [ColumnType.PRODUCT_IMAGE]: ['image', 'картинка', 'фото', 'изображение'],
+      [ColumnType.PRODUCT_LINK]: ['url', 'link', 'ссылка'],
+      [ColumnType.PRODUCT_PARAMETER_ID]: ['parameter id', 'id параметра'],
+      [ColumnType.PRODUCT_PARAMETER_CHARACTERISTIC]: ['характеристика', 'feature', 'attribute'],
+      [ColumnType.PRODUCT_PARAMETER_CHARACTERISTIC_UNIT]: ['unit', 'ед изм', 'единица', 'unit of measure'],
+      [ColumnType.PRODUCT_PARAMETER_PRICE]: ['price', 'цена', 'стоимость'],
+      [ColumnType.MODIFIER_GROUP_ID]: ['modifier group id', 'группа модификаторов id'],
+      [ColumnType.MODIFIER_GROUP_NAME]: ['modifier group', 'группа модификаторов'],
+      [ColumnType.MODIFIER_GROUP_TYPE]: ['modifier type', 'тип модификатора'],
+      [ColumnType.MODIFIER_GROUP_MAX_SELECT]: ['max select', 'максимум'],
+      [ColumnType.MODIFIER_GROUP_MIN_SELECT]: ['min select', 'минимум'],
+      [ColumnType.MODIFIER_ID]: ['modifier id', 'id модификатора'],
+      [ColumnType.MODIFIER_NAME]: ['modifier name', 'модификатор'],
+      [ColumnType.MODIFIER_PRICE]: ['modifier price', 'цена модификатора'],
+      [ColumnType.PRODUCT_VENDOR_CODE]: ['vendor code', 'внешний код', 'sku', 'код поставщика'],
+      [ColumnType.PRODUCT_LABEL_ID]: ['label id', 'id метки'],
+      [ColumnType.PRODUCT_SORT]: ['sort', 'порядок', 'позиция'],
+      [ColumnType.PRODUCT_PARAMETER_DESCRIPTION]: ['parameter description', 'описание параметра'],
+      [ColumnType.PRODUCT_PARAMETER_VENDOR_CODE]: ['parameter vendor code', 'код параметра'],
+      [ColumnType.PRODUCT_PARAMETER_SORT]: ['parameter sort', 'порядок параметра'],
+      [ColumnType.PRODUCT_PARAMETER_PROTEINS]: ['proteins', 'белки'],
+      [ColumnType.PRODUCT_PARAMETER_FATS]: ['fats', 'жиры'],
+      [ColumnType.PRODUCT_PARAMETER_CARBOHYDRATES]: ['carbohydrates', 'углеводы'],
+      [ColumnType.PRODUCT_PARAMETER_CALORIES]: ['calories', 'калории', 'ккал'],
+      [ColumnType.MODIFIER_GROUP_REQUIRED]: ['required', 'обязательно'],
+      [ColumnType.MODIFIER_GROUP_SORT]: ['modifier group sort', 'порядок группы'],
+      [ColumnType.MODIFIER_VENDOR_CODE]: ['modifier vendor code', 'код модификатора'],
+      [ColumnType.MODIFIER_SORT]: ['modifier sort', 'порядок модификатора'],
+    };
+
+    const toKeywordParts = (value: string) =>
+      value
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/[_-]/g, ' ')
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    const buildAutoMappingKeywords = (item: {
+      value: ColumnType;
+      label: string;
+      labelRu?: string;
+      description?: string;
+    }): string[] => {
+      const joined = [
+        item.value,
+        item.label,
+        item.labelRu ?? '',
+        item.description ?? '',
+      ]
+        .flatMap(toKeywordParts);
+
+      const explicit = explicitAutoMappingKeywords[item.value] ?? [];
+      return Array.from(
+        new Set(
+          [...explicit, ...joined]
+            .map((entry) => entry.trim().toLowerCase())
+            .filter(Boolean)
+        )
+      );
+    };
+
+    const supportedColumnTypes: ConfigResponseDto['supportedColumnTypes'] = [
         { value: ColumnType.CATEGORY_ID, label: 'Category ID', labelRu: 'Артикул/ID категории', description: 'Category article/ID', filter: [ "category" ], 
           domains: xmlDomains({
             yml: { parent_tag: 'categories', tag: 'category', attribute: 'id' },
@@ -405,7 +474,19 @@ export class ConvertController {
             food: "secondary",
             retail: "hidden"
           }},
-      ],
+      ];
+
+    const config: ConfigResponseDto = {
+      supportedColumnTypes: supportedColumnTypes.map((item) => ({
+        ...item,
+        autoMappingKeywords: buildAutoMappingKeywords({
+          value: item.value as ColumnType,
+          label: item.label,
+          labelRu: item.labelRu,
+          description: item.description,
+        }),
+      })),
+
       supportedOutputFormats: [
         { value: 'table', label: 'Таблица (CSV)' },
         { value: 'yml', label: 'YML' },

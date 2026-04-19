@@ -23,6 +23,7 @@
     "axios": "^1.13.2",
     "fast-xml-parser": "^5.3.3",
     "file-saver": "^2.0.5",
+    "fuse.js": "^7.3.0",
     "handsontable": "^16.2.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.25",

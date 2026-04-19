@@ -36,6 +36,7 @@ export interface IConfigColumnType {
   label: string;
   labelRu?: string;
   description?: string;
+  autoMappingKeywords?: string[];
   filter?: string[];
   domains?: Partial<Record<"yml" | "extended_yml" | "google_feed", { parent_tag: string; tag: string; attribute?: string }>>;
   priority?: Partial<Record<ColumnTemplate, ColumnVisibilityPriority>>;

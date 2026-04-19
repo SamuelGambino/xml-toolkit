@@ -17,6 +17,7 @@ import {
   type XmlType,
 } from "@/stores/useConverter";
 import "./ConvertView.css";
+import Fuse from "fuse.js";
 
 type TableData = (string | number | boolean | null)[][];
 type TSelectedFilter = ColumnTemplate;
@@ -59,6 +60,51 @@ const filteredOptions = computed(() => {
     return Boolean(opt.domains[selectedDomain as "yml" | "extended_yml" | "google_feed"])
   })
 });
+
+const autoMapColumns = () => {
+  if (!showSourceTable.value || columns.value.length === 0 || supportedTypes.value.length === 0) {
+    return;
+  }
+
+  const hasManualMappings = Object.keys(columnMappings.value).length > 0;
+  if (hasManualMappings) return;
+
+  const fuse = new Fuse(
+    supportedTypes.value.map((type) => ({
+      ...type,
+      autoMappingKeywords: type.autoMappingKeywords ?? [],
+    })),
+    {
+      includeScore: true,
+      threshold: 0.35,
+      keys: [
+        { name: "label", weight: 0.35 },
+        { name: "labelRu", weight: 0.35 },
+        { name: "value", weight: 0.2 },
+        { name: "autoMappingKeywords", weight: 0.9 },
+      ],
+      ignoreLocation: true,
+      minMatchCharLength: 2,
+    }
+  );
+
+  const nextMappings: Record<number, string> = {};
+
+  columns.value.forEach((column) => {
+    const normalizedQuery = String(column.name ?? "").trim().toLowerCase();
+    if (!normalizedQuery) return;
+
+    const [bestMatch] = fuse.search(normalizedQuery);
+    if (!bestMatch) return;
+    if (typeof bestMatch.score === "number" && bestMatch.score > 0.35) return;
+
+    nextMappings[column.index] = bestMatch.item.value;
+  });
+
+  if (Object.keys(nextMappings).length > 0) {
+    columnMappings.value = nextMappings;
+  }
+};
 
 const onUpload = async (file: NormalizedFile) => {
   uploadedFile.value = file;
@@ -285,6 +331,10 @@ watch(convertToOptions, (opts) => {
   if (opts.length === 1 && first && selectedOutputFormat.value !== first.value) {
     selectedOutputFormat.value = first.value;
   }
+}, { immediate: true });
+
+watch([columns, supportedTypes, showSourceTable], () => {
+  autoMapColumns();
 }, { immediate: true });
 </script>
 
